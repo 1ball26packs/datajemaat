@@ -717,7 +717,6 @@ INSERT INTO `jemaat` (`id`, `no_reg`, `nama`, `jk`, `tpt_lhr`, `tgl_lhr`, `tpt_n
 (2522,'121 / MJ.GKE-BH-LP III/U.II/2024','MIMY SETIAWATY','P','Samarinda','1983-04-14','-','0000-00-00','-','III','-'),
 (2523,'121 / MJ.GKE-BH-LP III/U.II/2024','REZKIEL','L','Banjarmasin','2010-04-06','-','0000-00-00','-','III','-'),
 (2524,'122 / MJ.GKE-BH-LP III/U.II/2024','MARLINAH DJ. BABOE','P','Purwakarta','1943-09-05','Purwakarta','1965-07-10','Jl.Pangrango No.056','III','KK'),
-(2525,'122 / MJ.GKE-BH-LP III/U.II/2024','TOMY ERICKSON BABOE','L','Jakarta','1969-07-25','P.Raya','2013-05-11','-','III','AK'),
 (2526,'122 / MJ.GKE-BH-LP III/U.II/2024','ERNI JOHAN','P','Kanamit','1981-08-01','P.Raya','2013-05-11','-','III','MNT'),
 (2527,'122 / MJ.GKE-BH-LP III/U.II/2024','DELLA ANDRIANI','P','P.Raya','2015-03-25','-','0000-00-00','-','III','CC'),
 (2528,'123 / MJ.GKE-BH-LP III/U.II/2024','ROSINCHE','P','K.Kapuas','1957-06-23','-','0000-00-00','Jl.Pangrango No.059','III','KK'),

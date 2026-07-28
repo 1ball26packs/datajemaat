@@ -410,6 +410,17 @@
             display: block;
         }
 
+        .age-stats-section {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .age-stats-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -463,7 +474,7 @@
 
         <!-- Data Section -->
         <div class="data-section" id="dataSection">
-            <!-- Statistik -->
+            <!-- Statistik Demografi -->
             <div class="stats">
                 <div class="stat-card">
                     <div class="stat-number" id="totalCount">0</div>
@@ -483,6 +494,37 @@
                 </div>
             </div>
 
+            <!-- Statistik Umur -->
+            <div class="age-stats-section">
+                <h3>📊 Statistik Umur</h3>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="age0to13">0</div>
+                        <div class="stat-label">0-13 Tahun</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="age14to24">0</div>
+                        <div class="stat-label">14-24 Tahun</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="age25to59">0</div>
+                        <div class="stat-label">25-59 Tahun</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="age60plus">0</div>
+                        <div class="stat-label">60+ Tahun</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="ageAbove19">0</div>
+                        <div class="stat-label">Lebih dari 19 Tahun</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="ageUnknown">0</div>
+                        <div class="stat-label">Umur Tidak Diketahui</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Kontrol Pencarian & Filter -->
             <div class="controls">
                 <div class="search-box">
@@ -496,6 +538,14 @@
                     </select>
                     <select id="filterLingPel">
                         <option value="">Semua Lingkungan</option>
+                    </select>
+                    <select id="filterAge">
+                        <option value="">Semua Umur</option>
+                        <option value="0-13">0-13 Tahun</option>
+                        <option value="14-24">14-24 Tahun</option>
+                        <option value="25-59">25-59 Tahun</option>
+                        <option value="60+">60+ Tahun</option>
+                        <option value=">19">Lebih dari 19 Tahun</option>
                     </select>
                     <button class="button button-secondary" onclick="resetFilters()">Reset</button>
                     <button class="button button-primary" onclick="exportToCSV()">📥 Export CSV</button>
@@ -516,6 +566,7 @@
                             <th>No. Registrasi</th>
                             <th>Nama</th>
                             <th style="width: 50px;">JK</th>
+                            <th>Umur</th>
                             <th>Tempat Lahir</th>
                             <th>Tanggal Lahir</th>
                             <th>Tempat Nikah</th>
@@ -565,6 +616,38 @@
         let currentPage = 1;
         let itemsPerPage = 20;
 
+        // Hitung umur berdasarkan tanggal lahir
+        function calculateAge(birthDateString) {
+            if (!birthDateString || birthDateString === '0000-00-00') return null;
+
+            try {
+                const birthDate = new Date(birthDateString);
+                if (isNaN(birthDate.getTime())) return null;
+
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+
+                return age >= 0 ? age : null;
+            } catch {
+                return null;
+            }
+        }
+
+        // Dapatkan kategori umur
+        function getAgeCategory(age) {
+            if (age === null) return null;
+            if (age >= 0 && age <= 13) return '0-13';
+            if (age >= 14 && age <= 24) return '14-24';
+            if (age >= 25 && age <= 59) return '25-59';
+            if (age >= 60) return '60+';
+            return null;
+        }
+
         // Parse SQL data
         function parseSQLData(sqlContent) {
             const data = [];
@@ -578,13 +661,17 @@
                 let dataMatch;
 
                 while ((dataMatch = valuePattern.exec(values)) !== null) {
+                    const tgl_lhr = dataMatch[6].trim();
+                    const age = calculateAge(tgl_lhr);
+                    
                     data.push({
                         id: parseInt(dataMatch[1]),
                         no_reg: dataMatch[2].trim(),
                         nama: dataMatch[3].trim(),
                         jk: dataMatch[4].trim(),
                         tpt_lhr: dataMatch[5].trim(),
-                        tgl_lhr: dataMatch[6].trim(),
+                        tgl_lhr: tgl_lhr,
+                        age: age,
                         tpt_nkh: dataMatch[7].trim(),
                         tgl_nkh: dataMatch[8].trim(),
                         alamat: dataMatch[9].trim() || '-',
@@ -653,6 +740,7 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const filterGender = document.getElementById('filterGender').value;
             const filterLingPel = document.getElementById('filterLingPel').value;
+            const filterAge = document.getElementById('filterAge').value;
 
             let filtered = allData.filter(item => {
                 const matchSearch = !searchTerm ||
@@ -663,7 +751,17 @@
                 const matchGender = !filterGender || item.jk === filterGender;
                 const matchLingPel = !filterLingPel || item.ling_pel === filterLingPel;
 
-                return matchSearch && matchGender && matchLingPel;
+                let matchAge = !filterAge;
+                if (filterAge) {
+                    if (filterAge === '>19') {
+                        matchAge = item.age !== null && item.age > 19;
+                    } else {
+                        const category = getAgeCategory(item.age);
+                        matchAge = category === filterAge;
+                    }
+                }
+
+                return matchSearch && matchGender && matchLingPel && matchAge;
             });
 
             filteredFamilies = groupByFamily(filtered);
@@ -758,7 +856,7 @@
                         <td>
                             <span class="toggle-icon expanded" id="icon-${dataIndex}">▶</span>
                         </td>
-                        <td colspan="10">
+                        <td colspan="11">
                             <strong>${family.no_reg}</strong>
                             <span style="color: #666; font-size: 12px;">(${family.members.length} anggota)</span>
                         </td>
@@ -772,6 +870,7 @@
                             <td>${member.no_reg}</td>
                             <td><strong>${member.nama}</strong></td>
                             <td><span class="gender-badge gender-${member.jk}">${member.jk}</span></td>
+                            <td>${member.age !== null ? member.age + ' thn' : '-'}</td>
                             <td>${member.tpt_lhr}</td>
                             <td>${formatDate(member.tgl_lhr)}</td>
                             <td>${member.tpt_nkh || '-'}</td>
@@ -823,10 +922,24 @@
 
         // Update stats
         function updateStats() {
+            const age0to13 = allData.filter(d => d.age !== null && d.age >= 0 && d.age <= 13).length;
+            const age14to24 = allData.filter(d => d.age !== null && d.age >= 14 && d.age <= 24).length;
+            const age25to59 = allData.filter(d => d.age !== null && d.age >= 25 && d.age <= 59).length;
+            const age60plus = allData.filter(d => d.age !== null && d.age >= 60).length;
+            const ageAbove19 = allData.filter(d => d.age !== null && d.age > 19).length;
+            const ageUnknown = allData.filter(d => d.age === null).length;
+
             document.getElementById('totalCount').textContent = allData.length;
             document.getElementById('familyCount').textContent = groupByFamily(allData).length;
             document.getElementById('maleCount').textContent = allData.filter(d => d.jk === 'L').length;
             document.getElementById('femaleCount').textContent = allData.filter(d => d.jk === 'P').length;
+
+            document.getElementById('age0to13').textContent = age0to13;
+            document.getElementById('age14to24').textContent = age14to24;
+            document.getElementById('age25to59').textContent = age25to59;
+            document.getElementById('age60plus').textContent = age60plus;
+            document.getElementById('ageAbove19').textContent = ageAbove19;
+            document.getElementById('ageUnknown').textContent = ageUnknown;
         }
 
         // Attach listeners
@@ -834,6 +947,7 @@
             document.getElementById('searchInput').addEventListener('input', groupAndFilter);
             document.getElementById('filterGender').addEventListener('change', groupAndFilter);
             document.getElementById('filterLingPel').addEventListener('change', groupAndFilter);
+            document.getElementById('filterAge').addEventListener('change', groupAndFilter);
         }
 
         // Format date
@@ -863,6 +977,7 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('filterGender').value = '';
             document.getElementById('filterLingPel').value = '';
+            document.getElementById('filterAge').value = '';
             groupAndFilter();
         }
 
@@ -903,7 +1018,7 @@
         // Export CSV
         function exportToCSV() {
             const rows = [];
-            const headers = ['No. Registrasi', 'Nama', 'JK', 'Tempat Lahir', 'Tanggal Lahir', 'Tempat Nikah', 'Tanggal Nikah', 'Lingkungan', 'Status', 'Alamat'];
+            const headers = ['No. Registrasi', 'Nama', 'JK', 'Umur', 'Tempat Lahir', 'Tanggal Lahir', 'Tempat Nikah', 'Tanggal Nikah', 'Lingkungan', 'Status', 'Alamat'];
             rows.push(headers.join(','));
 
             filteredFamilies.forEach(family => {
@@ -912,6 +1027,7 @@
                         member.no_reg,
                         member.nama,
                         member.jk,
+                        member.age !== null ? member.age : '',
                         member.tpt_lhr || '',
                         member.tgl_lhr || '',
                         member.tpt_nkh || '',

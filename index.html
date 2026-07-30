@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL Data Editor - Auto Load</title>
+    <title>SQL Data Editor - Complete</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             background: white;
             border-radius: 10px;
@@ -128,12 +128,6 @@
             color: #155724;
         }
 
-        .info {
-            background: #d1ecf1;
-            border-color: #0c5460;
-            color: #0c5460;
-        }
-
         .controls {
             display: flex;
             gap: 15px;
@@ -192,15 +186,6 @@
             text-transform: uppercase;
         }
 
-        .button-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .button-primary:hover {
-            background: #5568d3;
-        }
-
         .button-secondary {
             background: #e2e8f0;
             color: #333;
@@ -221,7 +206,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 15px;
             margin-bottom: 30px;
         }
@@ -235,27 +220,47 @@
         }
 
         .stat-number {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             color: #667eea;
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
             margin-top: 5px;
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-filter input, .search-filter select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .search-filter input {
+            flex: 1;
+            min-width: 200px;
         }
 
         .table-wrapper {
             overflow-x: auto;
             border-radius: 5px;
             border: 1px solid #dee2e6;
+            margin-bottom: 20px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         thead {
@@ -266,13 +271,14 @@
         }
 
         th {
-            padding: 15px;
+            padding: 12px 10px;
             text-align: left;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         td {
-            padding: 12px 15px;
+            padding: 10px;
             border-bottom: 1px solid #dee2e6;
         }
 
@@ -311,7 +317,7 @@
         }
 
         .action-buttons button {
-            padding: 4px 10px;
+            padding: 4px 8px;
             font-size: 11px;
             border: none;
             border-radius: 3px;
@@ -329,9 +335,9 @@
 
         .status-badge {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -343,9 +349,9 @@
 
         .gender-badge {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 10px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
         }
 
@@ -366,6 +372,7 @@
             background: #f8f9fa;
             align-items: center;
             flex-wrap: wrap;
+            border-radius: 5px;
         }
 
         .pagination button {
@@ -512,6 +519,13 @@
             color: #666;
         }
 
+        @media (max-width: 1024px) {
+            th, td {
+                padding: 8px 5px;
+                font-size: 11px;
+            }
+        }
+
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -525,9 +539,16 @@
                 width: 100%;
             }
 
-            th, td {
-                padding: 8px 10px;
-                font-size: 12px;
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .search-filter {
+                flex-direction: column;
+            }
+
+            .search-filter input, .search-filter select {
+                width: 100%;
             }
         }
     </style>
@@ -536,8 +557,8 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>✏️ SQL Data Editor</h1>
-            <p>Auto-load + Edit data jemaat dengan grouping keluarga</p>
+            <h1>✏️ SQL Data Editor - Complete</h1>
+            <p>Semua kolom data + statistik lengkap</p>
             <div class="status-info">
                 <div class="status-item">
                     <span class="status-dot loading" id="statusDot"></span>
@@ -569,6 +590,7 @@
                         <div class="file-name" id="fileName"></div>
                     </div>
                     <button class="button button-secondary" onclick="clearData()">Clear Data</button>
+                    <button class="button button-success" onclick="downloadSQL()">💾 Download SQL</button>
                 </div>
 
                 <!-- Stats -->
@@ -582,24 +604,26 @@
                         <div class="stat-label">Total Keluarga</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="editedCount">0</div>
-                        <div class="stat-label">Sudah Diedit</div>
-                    </div>
-                    <div class="stat-card">
                         <div class="stat-number" id="maleCount">0</div>
                         <div class="stat-label">Laki-laki</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="femaleCount">0</div>
+                        <div class="stat-label">Perempuan</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="editedCount">0</div>
+                        <div class="stat-label">Sudah Diedit</div>
                     </div>
                 </div>
 
                 <!-- Search & Filters -->
-                <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <input type="text" id="searchInput" placeholder="🔍 Cari nama..." 
-                           style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                    <select id="filterLing" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                <div class="search-filter">
+                    <input type="text" id="searchInput" placeholder="🔍 Cari nama atau nomor registrasi...">
+                    <select id="filterLing">
                         <option value="">Semua Lingkungan</option>
                     </select>
                     <button class="button button-secondary" onclick="resetFilters()">Reset</button>
-                    <button class="button button-success" onclick="downloadSQL()">💾 Download SQL</button>
                 </div>
 
                 <!-- Table -->
@@ -610,9 +634,12 @@
                                 <th style="width: 25px;"></th>
                                 <th>No. Reg</th>
                                 <th>Nama</th>
-                                <th style="width: 50px;">JK</th>
+                                <th>JK</th>
+                                <th>Tempat Lahir</th>
                                 <th>Tgl Lahir</th>
+                                <th>Tempat Nikah</th>
                                 <th>Tgl Nikah</th>
+                                <th>Alamat</th>
                                 <th>Lingkungan</th>
                                 <th>Status</th>
                                 <th style="width: 80px;">Aksi</th>
@@ -630,7 +657,7 @@
                 <div class="pagination">
                     <button onclick="prevPage()" id="prevBtn">← Sebelumnya</button>
                     <span>Halaman <strong id="currentPage">1</strong> dari <strong id="totalPages">1</strong></span>
-                    <select id="itemsPerPage" onchange="changeItemsPerPage()" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <select id="itemsPerPage" onchange="changeItemsPerPage()">
                         <option value="10">10 per halaman</option>
                         <option value="20" selected>20 per halaman</option>
                         <option value="30">30 per halaman</option>
@@ -642,7 +669,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>💡 Auto-load jemaat_data.sql → Edit → Download → Upload manual ke GitHub</p>
+            <p>💡 Semua kolom data ditampilkan | Grouping by keluarga (KK→IST→AK)</p>
         </div>
     </div>
 
@@ -899,7 +926,7 @@
                         <td>
                             <span class="toggle-icon expanded" id="icon-${dataIndex}">▶</span>
                         </td>
-                        <td colspan="8">
+                        <td colspan="11">
                             <strong>${family.no_reg}</strong>
                             <span style="color: #666; font-size: 12px;">(${family.members.length} anggota)</span>
                         </td>
@@ -916,8 +943,11 @@
                             <td>${member.no_reg}</td>
                             <td><strong>${member.nama}</strong></td>
                             <td><span class="gender-badge gender-${member.jk}">${member.jk}</span></td>
+                            <td>${member.tpt_lhr}</td>
                             <td>${formatDate(member.tgl_lhr)}</td>
+                            <td>${member.tpt_nkh}</td>
                             <td>${formatDate(member.tgl_nkh)}</td>
+                            <td>${member.alamat}</td>
                             <td>${member.ling_pel}</td>
                             <td><span class="status-badge status-${member.status.toLowerCase()}">${member.status}</span></td>
                             <td>
@@ -972,8 +1002,9 @@
         function updateStats() {
             document.getElementById('totalCount').textContent = allData.length;
             document.getElementById('familyCount').textContent = groupByFamily(allData).length;
-            document.getElementById('editedCount').textContent = editedIndices.size;
             document.getElementById('maleCount').textContent = allData.filter(d => d.jk === 'L').length;
+            document.getElementById('femaleCount').textContent = allData.filter(d => d.jk === 'P').length;
+            document.getElementById('editedCount').textContent = editedIndices.size;
         }
 
         // Edit modal

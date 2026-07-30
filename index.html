@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL Data Editor - With Age Statistics</title>
+    <title>SQL Data Editor - Persistent Storage</title>
     <style>
         * {
             margin: 0;
@@ -74,6 +74,11 @@
             animation: pulse 1s infinite;
         }
 
+        .status-dot.unsaved {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -126,6 +131,12 @@
             background: #d4edda;
             border-color: #28a745;
             color: #155724;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border-color: #0c5460;
+            color: #0c5460;
         }
 
         .controls {
@@ -202,6 +213,29 @@
 
         .button-success:hover {
             background: #218838;
+        }
+
+        .button-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .button-danger:hover {
+            background: #c82333;
+        }
+
+        .storage-status {
+            background: #e7f3ff;
+            border: 1px solid #0c5460;
+            padding: 12px 15px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #0c5460;
+            margin-bottom: 20px;
+        }
+
+        .storage-status strong {
+            color: #084298;
         }
 
         .stats-section-title {
@@ -376,6 +410,11 @@
             font-weight: 600;
             background: #e2e8f0;
             color: #333;
+        }
+
+        .edited-marker {
+            color: #ff9800;
+            font-weight: bold;
         }
 
         .no-data {
@@ -577,12 +616,16 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>✏️ SQL Data Editor - With Age Statistics</h1>
-            <p>Semua kolom data + statistik usia lengkap</p>
+            <h1>✏️ SQL Data Editor - Persistent Storage</h1>
+            <p>Semua data tetap tersimpan dengan localStorage</p>
             <div class="status-info">
                 <div class="status-item">
                     <span class="status-dot loading" id="statusDot"></span>
                     <span id="statusText">Memuat data...</span>
+                </div>
+                <div class="status-item" id="storageStatusHeader" style="display:none;">
+                    <span class="status-dot" id="storageDot" style="background: #f59e0b;"></span>
+                    <span id="storageText">💾 Unsaved changes</span>
                 </div>
             </div>
         </div>
@@ -591,6 +634,7 @@
         <div class="content">
             <div class="message error" id="errorMsg"></div>
             <div class="message success" id="successMsg"></div>
+            <div class="message info" id="infoMsg"></div>
 
             <!-- Loading Section -->
             <div class="loading-section" id="loadingSection">
@@ -600,6 +644,13 @@
 
             <!-- Data Section -->
             <div id="dataSection" style="display:none;">
+                <!-- Storage Status -->
+                <div class="storage-status" id="storageStatus" style="display:none;">
+                    <strong id="storageStatusText">💾 Auto-saved to browser storage</strong> | 
+                    <span id="storageDetails"></span>
+                    <button class="button button-secondary" style="float:right; padding: 4px 12px; font-size: 12px;" onclick="clearLocalStorage()">Clear Storage</button>
+                </div>
+
                 <!-- Upload Section -->
                 <div class="controls">
                     <div class="file-input-wrapper">
@@ -609,7 +660,7 @@
                         </label>
                         <div class="file-name" id="fileName"></div>
                     </div>
-                    <button class="button button-secondary" onclick="clearData()">Clear Data</button>
+                    <button class="button button-secondary" onclick="clearData()">Clear All</button>
                     <button class="button button-success" onclick="downloadSQL()">💾 Download SQL</button>
                 </div>
 
@@ -720,7 +771,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>💡 Semua kolom data ditampilkan | Statistik usia otomatis | Grouping by keluarga (KK→IST→AK)</p>
+            <p>💡 Data otomatis tersimpan di browser | Refresh aman (data tetap ada) | Jangan lupa download SQL sebelum tutup!</p>
         </div>
     </div>
 
@@ -795,6 +846,12 @@
         let currentPage = 1;
         let itemsPerPage = 20;
         let editingIndex = -1;
+        let hasUnsavedChanges = false;
+
+        const STORAGE_KEYS = {
+            data: 'jemaat_allData',
+            edited: 'jemaat_editedIndices'
+        };
 
         // Calculate age from birth date
         function calculateAge(birthDate) {
@@ -825,11 +882,94 @@
             return '60+';
         }
 
+        // localStorage functions
+        function saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.data, JSON.stringify(allData));
+                localStorage.setItem(STORAGE_KEYS.edited, JSON.stringify(Array.from(editedIndices)));
+                updateStorageStatus();
+            } catch (error) {
+                showError('❌ Error menyimpan ke localStorage: ' + error.message);
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const savedData = localStorage.getItem(STORAGE_KEYS.data);
+                const savedEdited = localStorage.getItem(STORAGE_KEYS.edited);
+                
+                if (savedData) {
+                    allData = JSON.parse(savedData);
+                }
+                if (savedEdited) {
+                    editedIndices = new Set(JSON.parse(savedEdited));
+                }
+                
+                return !!savedData;
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+                return false;
+            }
+        }
+
+        function updateStorageStatus() {
+            const status = document.getElementById('storageStatus');
+            const statusHeader = document.getElementById('storageStatusHeader');
+            
+            if (editedIndices.size > 0) {
+                status.style.display = 'block';
+                statusHeader.style.display = 'flex';
+                document.getElementById('storageStatusText').textContent = `💾 Auto-saved to browser (${editedIndices.size} changes)`;
+                document.getElementById('storageDetails').textContent = `Last updated: ${new Date().toLocaleTimeString('id-ID')}`;
+                document.getElementById('storageText').textContent = `💾 ${editedIndices.size} unsaved changes`;
+                document.getElementById('statusDot').classList.add('unsaved');
+            } else {
+                statusHeader.style.display = 'none';
+                document.getElementById('statusDot').classList.remove('unsaved');
+            }
+        }
+
+        function clearLocalStorage() {
+            if (confirm('Hapus semua data dari browser storage?')) {
+                localStorage.removeItem(STORAGE_KEYS.data);
+                localStorage.removeItem(STORAGE_KEYS.edited);
+                showSuccess('✅ Browser storage cleared');
+                document.getElementById('storageStatus').style.display = 'none';
+            }
+        }
+
+        // Warn before refresh/close if unsaved
+        window.addEventListener('beforeunload', (e) => {
+            if (editedIndices.size > 0) {
+                e.preventDefault();
+                e.returnValue = `⚠️ Ada ${editedIndices.size} perubahan yang belum didownload! Yakin mau tutup?`;
+                return e.returnValue;
+            }
+        });
+
         // Auto-load SQL on page load
         window.addEventListener('DOMContentLoaded', autoLoadSQL);
 
         async function autoLoadSQL() {
             try {
+                // Try restore from localStorage first
+                if (loadFromStorage()) {
+                    document.getElementById('loadingSection').style.display = 'none';
+                    document.getElementById('dataSection').style.display = 'block';
+                    document.getElementById('statusDot').classList.remove('loading');
+                    document.getElementById('statusDot').style.background = '#4ade80';
+                    document.getElementById('statusText').textContent = `✅ Data restored from browser (${allData.length} jemaat)`;
+                    showInfo(`💾 Data restored dari browser storage. Ada ${editedIndices.size} perubahan yang belum didownload.`);
+
+                    populateFilters();
+                    updateStats();
+                    groupAndDisplay();
+                    updateStorageStatus();
+                    setupFileUpload();
+                    return;
+                }
+
+                // If no localStorage, try auto-load jemaat_data.sql
                 const response = await fetch('jemaat_data.sql');
                 if (!response.ok) throw new Error('File SQL tidak ditemukan di folder yang sama');
 
@@ -902,6 +1042,7 @@
 
                         editedIndices.clear();
                         currentPage = 1;
+                        saveToStorage();
                         populateFilters();
                         updateStats();
                         groupAndDisplay();
@@ -1021,7 +1162,7 @@
 
                     html += `
                         <tr class="member-row" id="group-${dataIndex}-member-${memberIndex}" data-group="group-${dataIndex}" style="${isEdited ? 'background-color: #fff3cd;' : ''}">
-                            <td></td>
+                            <td>${isEdited ? '<span class="edited-marker">✎</span>' : ''}</td>
                             <td>${member.no_reg}</td>
                             <td><strong>${member.nama}</strong></td>
                             <td><span class="gender-badge gender-${member.jk}">${member.jk}</span></td>
@@ -1159,7 +1300,11 @@
 
             editedIndices.add(editingIndex);
             closeEditModal();
-            showSuccess('✅ Data berhasil diubah');
+            
+            // Auto-save to localStorage
+            saveToStorage();
+            
+            showSuccess('✅ Data berhasil diubah (Auto-saved)');
             updateStats();
             groupAndDisplay();
         });
@@ -1186,7 +1331,12 @@
             link.download = 'jemaat_data_' + new Date().toISOString().slice(0, 10) + '.sql';
             link.click();
 
-            showSuccess('✅ File SQL berhasil didownload');
+            // Clear localStorage after download
+            editedIndices.clear();
+            saveToStorage();
+            updateStorageStatus();
+
+            showSuccess('✅ File SQL berhasil didownload | Perubahan sudah di-clear');
         }
 
         // Pagination
@@ -1233,12 +1383,14 @@
 
         // Clear data
         function clearData() {
-            if (confirm('Yakin clear semua data?')) {
+            if (confirm('Yakin hapus SEMUA data dan perubahan? (tidak bisa dibatalkan)')) {
                 allData = [];
                 editedIndices.clear();
                 document.getElementById('sqlFile').value = '';
                 document.getElementById('fileName').textContent = '';
-                showSuccess('✅ Data cleared');
+                localStorage.removeItem(STORAGE_KEYS.data);
+                localStorage.removeItem(STORAGE_KEYS.edited);
+                showSuccess('✅ Semua data cleared');
             }
         }
 
@@ -1265,6 +1417,13 @@
             div.textContent = msg;
             div.classList.add('show');
             setTimeout(() => div.classList.remove('show'), 3000);
+        }
+
+        function showInfo(msg) {
+            const div = document.getElementById('infoMsg');
+            div.textContent = msg;
+            div.classList.add('show');
+            setTimeout(() => div.classList.remove('show'), 5000);
         }
 
         // Close modal on outside click

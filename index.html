@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL Data Editor - Jemaat</title>
+    <title>SQL Data Editor - Auto Load</title>
     <style>
         * {
             margin: 0;
@@ -44,8 +44,64 @@
             opacity: 0.9;
         }
 
+        .status-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+
+        .status-dot.loading {
+            background: #fbbf24;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .content {
             padding: 30px 20px;
+        }
+
+        .loading-section {
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .message {
@@ -145,9 +201,13 @@
             background: #5568d3;
         }
 
-        .button-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .button-secondary {
+            background: #e2e8f0;
+            color: #333;
+        }
+
+        .button-secondary:hover {
+            background: #cbd5e1;
         }
 
         .button-success {
@@ -157,20 +217,6 @@
 
         .button-success:hover {
             background: #218838;
-        }
-
-        .button-success:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .button-secondary {
-            background: #e2e8f0;
-            color: #333;
-        }
-
-        .button-secondary:hover {
-            background: #cbd5e1;
         }
 
         .stats {
@@ -248,14 +294,6 @@
             background: #d0e8ff;
         }
 
-        .group-row td {
-            padding: 12px 15px;
-        }
-
-        .member-row {
-            padding-left: 40px;
-        }
-
         .toggle-icon {
             display: inline-block;
             margin-right: 10px;
@@ -278,7 +316,6 @@
             border: none;
             border-radius: 3px;
             cursor: pointer;
-            transition: background 0.3s;
         }
 
         .edit-btn {
@@ -331,25 +368,16 @@
             flex-wrap: wrap;
         }
 
-        .pagination button, .pagination a {
+        .pagination button {
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
             background: white;
             cursor: pointer;
-            transition: all 0.3s;
             font-size: 13px;
-            text-decoration: none;
-            color: #333;
         }
 
-        .pagination button:hover, .pagination a:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .pagination button.active {
+        .pagination button:hover {
             background: #667eea;
             color: white;
             border-color: #667eea;
@@ -455,7 +483,6 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
-            transition: background 0.3s;
         }
 
         .save-btn {
@@ -502,11 +529,6 @@
                 padding: 8px 10px;
                 font-size: 12px;
             }
-
-            .modal-content {
-                width: 95%;
-                margin: 20% auto;
-            }
         }
     </style>
 </head>
@@ -515,49 +537,60 @@
         <!-- Header -->
         <div class="header">
             <h1>✏️ SQL Data Editor</h1>
-            <p>Edit data jemaat dan download SQL yang sudah dimodifikasi</p>
+            <p>Auto-load + Edit data jemaat dengan grouping keluarga</p>
+            <div class="status-info">
+                <div class="status-item">
+                    <span class="status-dot loading" id="statusDot"></span>
+                    <span id="statusText">Memuat data...</span>
+                </div>
+            </div>
         </div>
 
         <!-- Messages -->
         <div class="content">
             <div class="message error" id="errorMsg"></div>
             <div class="message success" id="successMsg"></div>
-            <div class="message info" id="infoMsg"></div>
 
-            <!-- Upload Section -->
-            <div class="controls">
-                <div class="file-input-wrapper">
-                    <input type="file" id="sqlFile" accept=".sql" />
-                    <label for="sqlFile" class="file-input-label" id="fileLabel">
-                        📁 Drag & drop file SQL atau klik untuk pilih
-                    </label>
-                    <div class="file-name" id="fileName"></div>
-                </div>
-                <button class="button button-secondary" onclick="clearData()">Clear Data</button>
+            <!-- Loading Section -->
+            <div class="loading-section" id="loadingSection">
+                <div class="spinner"></div>
+                <p>🔄 Memproses file SQL...</p>
             </div>
 
-            <!-- Stats -->
-            <div class="stats" id="statsSection" style="display:none;">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalCount">0</div>
-                    <div class="stat-label">Total Jemaat</div>
+            <!-- Data Section -->
+            <div id="dataSection" style="display:none;">
+                <!-- Upload Section -->
+                <div class="controls">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="sqlFile" accept=".sql" />
+                        <label for="sqlFile" class="file-input-label" id="fileLabel">
+                            📁 Atau drag & drop file SQL untuk update
+                        </label>
+                        <div class="file-name" id="fileName"></div>
+                    </div>
+                    <button class="button button-secondary" onclick="clearData()">Clear Data</button>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="familyCount">0</div>
-                    <div class="stat-label">Total Keluarga</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="editedCount">0</div>
-                    <div class="stat-label">Sudah Diedit</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="maleCount">0</div>
-                    <div class="stat-label">Laki-laki</div>
-                </div>
-            </div>
 
-            <!-- Data Table -->
-            <div id="tableSection" style="display:none;">
+                <!-- Stats -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">Total Jemaat</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="familyCount">0</div>
+                        <div class="stat-label">Total Keluarga</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="editedCount">0</div>
+                        <div class="stat-label">Sudah Diedit</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="maleCount">0</div>
+                        <div class="stat-label">Laki-laki</div>
+                    </div>
+                </div>
+
                 <!-- Search & Filters -->
                 <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                     <input type="text" id="searchInput" placeholder="🔍 Cari nama..." 
@@ -609,7 +642,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>💡 Upload file SQL → Edit data (KK pertama, urut IST→AK) → Download hasil → Upload manual ke GitHub</p>
+            <p>💡 Auto-load jemaat_data.sql → Edit → Download → Upload manual ke GitHub</p>
         </div>
     </div>
 
@@ -685,63 +718,94 @@
         let itemsPerPage = 20;
         let editingIndex = -1;
 
-        // File upload
-        const fileInput = document.getElementById('sqlFile');
-        const fileLabel = document.getElementById('fileLabel');
-        const fileName = document.getElementById('fileName');
+        // Auto-load SQL on page load
+        window.addEventListener('DOMContentLoaded', autoLoadSQL);
 
-        fileLabel.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileLabel.classList.add('dragover');
-        });
+        async function autoLoadSQL() {
+            try {
+                const response = await fetch('jemaat_data.sql');
+                if (!response.ok) throw new Error('File SQL tidak ditemukan di folder yang sama');
 
-        fileLabel.addEventListener('dragleave', () => {
-            fileLabel.classList.remove('dragover');
-        });
+                const sqlContent = await response.text();
+                allData = parseSQLData(sqlContent);
 
-        fileLabel.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileLabel.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                handleFileSelect();
+                if (allData.length === 0) throw new Error('Tidak ada data di file SQL');
+
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('dataSection').style.display = 'block';
+                document.getElementById('statusDot').classList.remove('loading');
+                document.getElementById('statusDot').style.background = '#4ade80';
+                document.getElementById('statusText').textContent = `✅ Data dimuat otomatis (${allData.length} jemaat)`;
+
+                populateFilters();
+                updateStats();
+                groupAndDisplay();
+                setupFileUpload();
+
+            } catch (error) {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('dataSection').style.display = 'block';
+                showError('⚠️ Auto-load gagal: ' + error.message + '. Silakan upload file SQL manual.');
+                setupFileUpload();
             }
-        });
+        }
 
-        fileInput.addEventListener('change', handleFileSelect);
+        // File upload setup
+        function setupFileUpload() {
+            const fileInput = document.getElementById('sqlFile');
+            const fileLabel = document.getElementById('fileLabel');
+            const fileName = document.getElementById('fileName');
 
-        function handleFileSelect() {
-            const file = fileInput.files[0];
-            if (!file) return;
+            fileLabel.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileLabel.classList.add('dragover');
+            });
 
-            fileName.textContent = `✅ ${file.name}`;
+            fileLabel.addEventListener('dragleave', () => {
+                fileLabel.classList.remove('dragover');
+            });
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const sqlContent = e.target.result;
-                    allData = parseSQLData(sqlContent);
-
-                    if (allData.length === 0) {
-                        showError('❌ Tidak ada data ditemukan di file SQL');
-                        return;
-                    }
-
-                    editedIndices.clear();
-                    currentPage = 1;
-                    populateFilters();
-                    updateStats();
-                    groupAndDisplay();
-
-                    document.getElementById('tableSection').style.display = 'block';
-                    document.getElementById('statsSection').style.display = 'grid';
-
-                    showSuccess(`✅ File dimuat: ${allData.length} data jemaat`);
-                } catch (error) {
-                    showError('❌ Error parsing SQL: ' + error.message);
+            fileLabel.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileLabel.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect();
                 }
-            };
-            reader.readAsText(file);
+            });
+
+            fileInput.addEventListener('change', handleFileSelect);
+
+            function handleFileSelect() {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                fileName.textContent = `✅ ${file.name}`;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const sqlContent = e.target.result;
+                        allData = parseSQLData(sqlContent);
+
+                        if (allData.length === 0) {
+                            showError('❌ Tidak ada data ditemukan di file SQL');
+                            return;
+                        }
+
+                        editedIndices.clear();
+                        currentPage = 1;
+                        populateFilters();
+                        updateStats();
+                        groupAndDisplay();
+
+                        showSuccess(`✅ File dimuat: ${allData.length} data jemaat`);
+                    } catch (error) {
+                        showError('❌ Error parsing SQL: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
         }
 
         // Parse SQL
@@ -781,12 +845,7 @@
             return Object.keys(grouped).map(no_reg => ({
                 no_reg: no_reg,
                 members: grouped[no_reg].sort((a, b) => {
-                    const statusOrder = {
-                        'KK': 0,
-                        'IST': 1,
-                        'AK': 2,
-                        'ANK': 2
-                    };
+                    const statusOrder = { 'KK': 0, 'IST': 1, 'AK': 2, 'ANK': 2 };
                     const aOrder = statusOrder[a.status.trim()] !== undefined ? statusOrder[a.status.trim()] : 3;
                     const bOrder = statusOrder[b.status.trim()] !== undefined ? statusOrder[b.status.trim()] : 3;
                     return aOrder - bOrder;
@@ -835,7 +894,6 @@
             pageData.forEach((family, familyIndex) => {
                 const dataIndex = start + familyIndex;
 
-                // Group header
                 html += `
                     <tr class="group-row" onclick="toggleGroup('group-${dataIndex}')">
                         <td>
@@ -848,7 +906,6 @@
                     </tr>
                 `;
 
-                // Members (sorted: KK → IST → AK)
                 family.members.forEach((member, memberIndex) => {
                     const actualIndex = allData.indexOf(member);
                     const isEdited = editedIndices.has(actualIndex);
@@ -875,7 +932,6 @@
 
             tbody.innerHTML = html;
 
-            // Update pagination
             const totalPages = Math.ceil(filteredFamilies.length / itemsPerPage);
             document.getElementById('currentPage').textContent = currentPage;
             document.getElementById('totalPages').textContent = totalPages;
@@ -883,7 +939,7 @@
             document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
         }
 
-        // Toggle group visibility
+        // Toggle group
         function toggleGroup(groupId) {
             const groupNum = groupId.replace('group-', '');
             const icon = document.getElementById('icon-' + groupNum);
@@ -1041,10 +1097,8 @@
             if (confirm('Yakin clear semua data?')) {
                 allData = [];
                 editedIndices.clear();
-                fileInput.value = '';
-                fileName.textContent = '';
-                document.getElementById('tableSection').style.display = 'none';
-                document.getElementById('statsSection').style.display = 'none';
+                document.getElementById('sqlFile').value = '';
+                document.getElementById('fileName').textContent = '';
                 showSuccess('✅ Data cleared');
             }
         }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Data Jemaat GKE Bukit Hindu</title>
+<title>Data Jemaat GKE Efrata</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f6fa;color:#263238;padding:14px}
@@ -47,6 +47,7 @@ tr:hover td{background:#f8fbff}.family-row td{background:#eaf3ff!important;color
 .month-title{font-size:14px;color:#546e7a;margin:15px 0 8px;font-weight:700}
 
 .hidden{display:none}
+.view-special-hidden{display:none!important}
 
 .celebration-table-wrap{overflow:auto;background:#fff;border-radius:12px;box-shadow:0 3px 12px #0000000d}
 .celebration-table{width:100%;min-width:720px;border-collapse:collapse}
@@ -54,7 +55,6 @@ tr:hover td{background:#f8fbff}.family-row td{background:#eaf3ff!important;color
 .celebration-table th{text-align:center;background:#f7f9fb;font-weight:800}
 .celebration-table td:nth-child(2),.celebration-table td:nth-child(3){text-align:center}
 .birthday-pair-table{min-width:900px}
-.birthday-pair-table th,.birthday-pair-table td{width:12.5%}
 .celebration-heading{font-size:16px;font-weight:800;margin:4px 0 8px;color:#17324d}
 .celebration-name{font-size:20px;font-weight:800;color:#17324d;line-height:1.3}
 .celebration-v{margin:10px auto;color:#78909c;font-weight:700;font-size:18px}
@@ -63,30 +63,41 @@ tr:hover td{background:#f8fbff}.family-row td{background:#eaf3ff!important;color
 .celebration-place{font-size:13px;color:#78909c;margin-top:9px}
 
 @media(max-width:700px){
-body{padding:8px}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:20px}
-.card .value{font-size:22px}nav{gap:6px}nav button{padding:9px 12px}.panel{padding:12px}
-.controls{display:grid;grid-template-columns:1fr;gap:8px}
-.controls input,.controls select,.controls button{width:100%;min-width:0}
-.birthday-grid{grid-template-columns:1fr}
-
-.celebration-table-wrap{overflow:auto;background:#fff;border-radius:12px;box-shadow:0 3px 12px #0000000d}
-.celebration-table{width:100%;min-width:720px;border-collapse:collapse}
-.celebration-table th,.celebration-table td{padding:8px 10px;border:1px solid #263238;text-align:left;font-size:13px;white-space:nowrap}
-.celebration-table th{text-align:center;background:#f7f9fb;font-weight:800}
-.celebration-table td:nth-child(2),.celebration-table td:nth-child(3){text-align:center}
-.birthday-pair-table{min-width:900px}
-.birthday-pair-table th,.birthday-pair-table td{width:12.5%}
-.celebration-heading{font-size:16px;font-weight:800;margin:4px 0 8px;color:#17324d}
-.celebration-card{padding:18px 14px}
-.celebration-name{font-size:19px}
-.celebration-age{font-size:46px}
+body{padding:6px;font-size:14px}
+.container{width:100%;max-width:none}
+header{padding:14px 12px;margin-bottom:10px}
+h1{font-size:19px;line-height:1.25}
+.subtitle{font-size:12px;line-height:1.35}
+.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.card{padding:11px 7px}
+.card .label{font-size:10px}
+.card .value{font-size:20px}
+nav{gap:6px;margin-bottom:10px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+nav button{padding:9px 11px;font-size:12px;flex:0 0 auto}
+.panel{padding:10px;margin-bottom:10px}
+.controls{display:grid;grid-template-columns:1fr;gap:7px}
+.controls input,.controls select,.controls button{width:100%;min-width:0;font-size:14px}
+.section-title{font-size:16px;margin-bottom:9px}
+.month-title{font-size:13px}
+.table-wrap,.celebration-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{min-width:700px}
+.celebration-table{min-width:600px}
+.celebration-table th,.celebration-table td{padding:7px 8px;font-size:12px}
+.celebration-heading{font-size:14px;line-height:1.35;margin:4px 0 7px}
+.pagination{gap:4px}
+.pagination button{padding:7px 9px;font-size:12px}
+.family-grid,.birthday-grid{grid-template-columns:1fr}
+}
+@media(min-width:701px) and (max-width:1000px){
+.table-wrap,.celebration-table-wrap{overflow-x:auto}
+table{min-width:800px}
 }
 </style>
 </head>
 <body>
 <div class="container">
 <header>
-<h1>📋 Data Jemaat GKE Bukit Hindu</h1>
+<h1>📋 Data Jemaat GKE Efrata</h1>
 <div class="subtitle">Dashboard data jemaat • seluruh data dimuat bertahap dari Supabase</div>
 </header>
 
@@ -347,35 +358,26 @@ function renderBirthdays(){
 const selected=Number($("birthMonth").value);
 let rows=allData.filter(r=>dateObj(r.tgl_lhr));
 if(selected>=0)rows=rows.filter(r=>dateObj(r.tgl_lhr).getMonth()===selected);
+
 rows.sort((a,b)=>{
 const da=dateObj(a.tgl_lhr),db=dateObj(b.tgl_lhr);
-return da.getDate()-db.getDate() || String(a.nama||"").localeCompare(String(b.nama||""),"id");
+return da.getDate()-db.getDate() ||
+       String(a.nama||"").localeCompare(String(b.nama||""),"id");
 });
 
-const cells=rows.map(r=>`<tr>
+const rowsHtml=rows.map(r=>`<tr>
 <td>${esc(r.nama||"-")}</td>
 <td>${esc(r.ling_pel||"-")}</td>
-<td>${age(r.tgl_lhr)}</td>
-<td>${dateID(r.tgl_lhr)}</td>
-</tr>`).join("");
-
-const pairs=[];
-for(let i=0;i<rows.length;i+=2)pairs.push([rows[i],rows[i+1]]);
-
-const pairRows=pairs.map(([a,b])=>`<tr>
-<td>${a?esc(a.nama||"-"):""}</td><td>${a?esc(a.ling_pel||"-"):""}</td><td>${a?age(a.tgl_lhr):""}</td><td>${a?dateID(a.tgl_lhr):""}</td>
-<td>${b?esc(b.nama||"-"):""}</td><td>${b?esc(b.ling_pel||"-"):""}</td><td>${b?age(b.tgl_lhr):""}</td><td>${b?dateID(b.tgl_lhr):""}</td>
+<td style="text-align:center">${age(r.tgl_lhr)}</td>
+<td style="text-align:center">${dateID(r.tgl_lhr)}</td>
 </tr>`).join("");
 
 $("birthdays").innerHTML=`
 <div class="celebration-heading">🎂 Ulang Tahun Kelahiran — ${selected<0?"Semua Bulan":monthNames[selected]} (${rows.length} orang)</div>
 <div class="celebration-table-wrap">
-<table class="celebration-table birthday-pair-table">
-<thead><tr>
-<th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th>
-<th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th>
-</tr></thead>
-<tbody>${pairRows||'<tr><td colspan="8" class="empty">Tidak ada data ulang tahun pada bulan ini.</td></tr>'}</tbody>
+<table class="celebration-table">
+<thead><tr><th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th></tr></thead>
+<tbody>${rowsHtml||'<tr><td colspan="4" class="empty">Tidak ada data ulang tahun pada bulan yang dipilih.</td></tr>'}</tbody>
 </table>
 </div>`;
 }
@@ -452,6 +454,7 @@ function switchView(view){
 currentView=view;
 document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
 ["all","birthday","marriage"].forEach(v=>$("view-"+v).classList.toggle("hidden",v!==view));
+$("search").closest(".panel").classList.toggle("view-special-hidden",view==="birthday"||view==="marriage");
 if(view==="all")applyFilters();
 }
 

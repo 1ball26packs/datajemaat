@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data Jemaat GKE Efrata</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f6fa;color:#263238;padding:14px}
+.container{max-width:1400px;margin:auto}
+header,.panel,.card,.table-wrap{background:#fff;border-radius:14px;box-shadow:0 3px 15px #00000012}
+header{padding:20px;margin-bottom:14px}
+h1{font-size:25px;color:#17324d}
+.subtitle{color:#78909c;font-size:13px;margin-top:5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.card{padding:16px;text-align:center}
+.card .label{font-size:12px;color:#78909c;text-transform:uppercase}
+.card .value{font-size:26px;font-weight:800;color:#1976d2;margin-top:4px}
+nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}
+nav button{border:0;background:#e8eef5;color:#34495e;padding:11px 16px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600}
+nav button.active{background:#1976d2;color:#fff}
+.panel{padding:16px;margin-bottom:14px}
+.controls{display:flex;gap:10px;flex-wrap:wrap}
+input,select{padding:11px 13px;border:1px solid #ccd6df;border-radius:9px;font-size:14px;background:#fff}
+input{flex:1;min-width:220px}
+button.action{padding:11px 15px;border:0;border-radius:9px;background:#1976d2;color:white;cursor:pointer}
+button.action.secondary{background:#607d8b}
+.status{margin:10px 0;padding:10px;border-radius:8px;font-size:13px;display:none}
+.status.show{display:block}.status.loading{background:#e3f2fd;color:#1565c0}.status.error{background:#ffebee;color:#c62828}.status.success{background:#e8f5e9;color:#2e7d32}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{padding:11px 12px;border-bottom:1px solid #e8edf1;text-align:left;font-size:13px}
+th{background:#f7f9fb;color:#455a64;position:sticky;top:0;z-index:2}
+tr:hover td{background:#f8fbff}.family-row td{background:#eaf3ff!important;color:#174a7a;font-size:13px;border-top:2px solid #c9def3}.family-row .badge{float:right}
+.empty{text-align:center;padding:40px;color:#90a4ae}
+.pagination{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:12px}
+.pagination button{border:0;padding:8px 11px;border-radius:7px;background:#e4eaf0;cursor:pointer}
+.pagination button.active{background:#1976d2;color:#fff}
+.family-grid,.env-grid,.birthday-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.group{border:1px solid #e2e8ee;border-radius:12px;padding:14px;background:#fff}
+.group h3{font-size:16px;color:#263238;margin-bottom:7px}
+.group .meta{font-size:12px;color:#78909c;margin-bottom:10px}
+.member{padding:7px 0;border-top:1px solid #edf1f4;font-size:13px}
+.member b{display:block}
+.badge{display:inline-block;padding:3px 7px;border-radius:20px;background:#e8f2ff;color:#1565c0;font-size:11px}
+.section-title{font-size:18px;font-weight:750;margin-bottom:12px;color:#17324d}
+.month-title{font-size:14px;color:#546e7a;margin:15px 0 8px;font-weight:700}
+
+
+.age-groups{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.age-card{background:#fff;border-radius:12px;padding:9px 12px;box-shadow:0 3px 15px #00000012;border-left:4px solid #90caf9}
+.age-card:nth-child(2){border-left-color:#7e57c2}
+.age-card:nth-child(3){border-left-color:#ff8a00}
+.age-card:nth-child(4){border-left-color:#20c997}
+.age-card .age-label{font-size:11px;color:#607d8b;text-transform:uppercase}
+.age-card .age-value{font-size:16px;font-weight:800;color:#263238;margin-top:3px}
+.celebration-table-wrap{border:0;box-shadow:0 3px 15px #00000012}
+.celebration-table{border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:12px}
+.celebration-table th{background:#eef5fb;color:#17324d;border-color:#d8e3ec;font-size:12px;letter-spacing:.3px}
+.celebration-table td{border-color:#e3ebf1;background:#fff}
+.celebration-table tbody tr:hover td{background:#f7fbff}
+.celebration-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f7fbff;border-left:4px solid #1976d2;border-radius:10px;padding:9px 12px}
+.birthday-mobile-cards{display:none}
+.birthday-card{background:#fff;border:1px solid #e3eaf0;border-radius:14px;padding:13px 14px;box-shadow:0 3px 12px #00000010}
+.birthday-card-name{font-weight:800;color:#17324d;font-size:16px;line-height:1.3}
+.birthday-card-row{display:flex;justify-content:space-between;gap:10px;margin-top:9px;color:#607d8b;font-size:12px}
+.birthday-card-row strong{color:#263238;font-size:13px}
+.birthday-card-hut{font-size:25px;font-weight:900;color:#1976d2}
+
+.hidden{display:none}
+.view-special-hidden{display:none!important}
+
+.celebration-table-wrap{overflow:auto;background:#fff;border-radius:12px;box-shadow:0 3px 12px #0000000d}
+.celebration-table{width:100%;min-width:720px;border-collapse:collapse}
+.celebration-table th,.celebration-table td{padding:8px 10px;border:1px solid #263238;text-align:left;font-size:13px;white-space:nowrap}
+.celebration-table th{text-align:center;background:#f7f9fb;font-weight:800}
+.celebration-table td:nth-child(2),.celebration-table td:nth-child(3){text-align:center}
+.birthday-pair-table{min-width:900px}
+.celebration-heading{font-size:16px;font-weight:800;margin:4px 0 8px;color:#17324d}
+.celebration-name{font-size:20px;font-weight:800;color:#17324d;line-height:1.3}
+.celebration-v{margin:10px auto;color:#78909c;font-weight:700;font-size:18px}
+.celebration-age{font-size:52px;line-height:1;font-weight:900;color:#1976d2;margin:4px 0 8px}
+.celebration-date{font-size:16px;font-weight:700;color:#37474f}
+.celebration-place{font-size:13px;color:#78909c;margin-top:9px}
+
+
+/* Modern celebration tables - desktop */
+.celebration-table-wrap{
+  position:relative;
+  overflow:auto;
+  background:linear-gradient(145deg,#ffffff,#f7fbff);
+  border:1px solid #dbe7f1;
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(23,50,77,.08),0 2px 6px rgba(23,50,77,.05);
+}
+.celebration-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:720px;
+  background:transparent;
+}
+.celebration-table th{
+  padding:13px 14px;
+  border:0;
+  border-bottom:2px solid #d9e6f0;
+  background:linear-gradient(180deg,#f8fbfe,#eef5fa);
+  color:#35566f;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  text-align:center;
+}
+.celebration-table th:first-child{border-top-left-radius:15px}
+.celebration-table th:last-child{border-top-right-radius:15px}
+.celebration-table td{
+  padding:13px 14px;
+  border:0;
+  border-bottom:1px solid #e7eef4;
+  background:rgba(255,255,255,.86);
+  color:#263238;
+  font-size:13px;
+  transition:background .18s ease,box-shadow .18s ease;
+}
+.celebration-table tbody tr:last-child td{border-bottom:0}
+.celebration-table tbody tr:hover td{
+  background:#f3f9ff;
+  box-shadow:inset 0 1px 0 #dcecf8,inset 0 -1px 0 #dcecf8;
+}
+.celebration-table tbody tr td:first-child{
+  font-weight:700;
+  color:#17324d;
+}
+.celebration-table tbody tr td:nth-child(2){
+  font-weight:800;
+  color:#1976d2;
+}
+.celebration-table tbody tr td:nth-child(3){
+  font-weight:900;
+  color:#1565c0;
+  font-size:15px;
+}
+.celebration-table tbody tr td:nth-child(4){
+  color:#455a64;
+  font-weight:600;
+}
+.celebration-heading{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:6px 0 10px;
+  padding:11px 14px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#eef7ff,#f9fcff);
+  border:1px solid #dbeaf5;
+  box-shadow:0 4px 12px rgba(25,118,210,.06);
+  color:#17324d;
+  font-size:15px;
+  font-weight:800;
+}
+.celebration-heading::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg,#cfe1ee,transparent);
+}
+#view-birthday .panel,#view-marriage .panel{
+  border:1px solid #dbe7f1;
+  background:linear-gradient(145deg,#fff,#f8fbfd);
+}
+#birthMonth,#marriageMonth{
+  min-width:190px;
+  border-color:#cbdce9;
+  font-weight:600;
+  color:#35566f;
+}
+
+
+#statsScope{
+  margin: -4px 0 10px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  background:#f3f8fc;
+  border:1px solid #dce9f2;
+  color:#557080;
+  font-size:12px;
+  font-weight:600;
+}
+
+@media(max-width:700px){
+body{padding:6px;font-size:14px}
+.container{width:100%;max-width:none}
+header{padding:14px 12px;margin-bottom:10px}
+h1{font-size:19px;line-height:1.25}
+.subtitle{font-size:12px;line-height:1.35}
+.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.card{padding:11px 7px}
+.card .label{font-size:10px}
+.card .value{font-size:20px}
+nav{gap:6px;margin-bottom:10px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+nav button{padding:9px 11px;font-size:12px;flex:0 0 auto}
+.panel{padding:10px;margin-bottom:10px}
+.controls{display:grid;grid-template-columns:1fr;gap:7px}
+.controls input,.controls select,.controls button{width:100%;min-width:0;font-size:14px}
+.section-title{font-size:16px;margin-bottom:9px}
+.month-title{font-size:13px}
+.table-wrap,.celebration-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{min-width:700px}
+.celebration-table{min-width:600px}
+.celebration-table th,.celebration-table td{padding:7px 8px;font-size:12px}
+.celebration-heading{font-size:14px;line-height:1.35;margin:4px 0 7px}
+.pagination{gap:4px}
+.pagination button{padding:7px 9px;font-size:12px}
+.family-grid,.birthday-grid{grid-template-columns:1fr}
+
+.age-groups{grid-template-columns:repeat(2,1fr);gap:7px}
+.age-card{padding:8px 10px}
+.age-card .age-label{font-size:9px}
+.age-card .age-value{font-size:14px}
+.birthday-desktop{display:none}
+.birthday-mobile-cards{display:grid;grid-template-columns:1fr;gap:9px}
+.celebration-heading{font-size:13px;align-items:flex-start}
+.celebration-heading span:last-child{white-space:nowrap;font-size:11px}
+}
+}
+@media(min-width:701px) and (max-width:1000px){
+.table-wrap,.celebration-table-wrap{overflow-x:auto}
+table{min-width:800px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>📋 Data Jemaat GKE Efrata</h1>
+<div class="subtitle">Dashboard data jemaat • seluruh data dimuat bertahap dari Supabase</div>
+</header>
+
+<div class="stats" id="stats"></div>
+<div class="age-groups" id="ageGroups"></div>
+
+<nav>
+<button class="active" data-view="all">👥 Semua Jemaat</button>
+<button data-view="birthday">🎂 Ulang Tahun</button>
+<button data-view="marriage">💍 Pernikahan</button>
+</nav>
+
+<div class="panel">
+<div class="controls" role="search" onsubmit="return false;">
+<input id="search" placeholder="Cari nama, no registrasi, alamat..." autocomplete="off">
+<select id="lpFilter" aria-label="Filter Lingkungan Pelayanan"><option value="">Semua LP</option></select>
+<button class="action secondary" onclick="resetFilters()">Reset</button>
+<button class="action" onclick="loadAllData()">🔄 Refresh</button>
+</div>
+<div id="status" class="status"></div>
+</div>
+
+<section id="view-all">
+<div class="section-title">Daftar Jemaat</div>
+<div class="table-wrap">
+<table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+<div id="empty" class="empty hidden">Tidak ada data.</div>
+</div>
+<div id="pagination" class="pagination"></div>
+</section>
+
+
+
+
+<section id="view-birthday" class="hidden">
+<div class="section-title">🎂 Ulang Tahun Kelahiran</div>
+<div class="panel" style="padding:12px;margin-bottom:12px">
+<div class="controls">
+<select id="birthMonth" aria-label="Pilih bulan ulang tahun kelahiran"></select>
+</div>
+</div>
+<div id="birthdays"></div>
+</section>
+
+<section id="view-marriage" class="hidden">
+<div class="section-title">💍 Ulang Tahun Pernikahan</div>
+<div class="panel" style="padding:12px;margin-bottom:12px">
+<div class="controls">
+<select id="marriageMonth" aria-label="Pilih bulan ulang tahun pernikahan"></select>
+</div>
+</div>
+<div id="marriages"></div>
+</section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+"use strict";
+
+const SUPABASE_URL="https://gpgjgplqsvyexumoljyo.supabase.co";
+const SUPABASE_KEY="sb_publishable_JaVgg3CuVmI9SczGkoaRZQ_EaYoV9z9";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let allData=[];
+let filtered=[];
+let page=1;
+const PER_PAGE=25;
+let currentView="all";
+
+const labels={
+id:"ID",no_reg:"No. Registrasi",nama:"Nama",jk:"JK",
+tpt_lhr:"Tempat Lahir",tgl_lhr:"Tanggal Lahir",
+tpt_nkh:"Tempat Nikah",tgl_nkh:"Tanggal Nikah",
+alamat:"Alamat",ling_pel:"Lingkungan Pelayanan",status:"Status"
+};
+
+const $=id=>document.getElementById(id);
+
+function showStatus(msg,type="success"){
+const el=$("status");el.textContent=msg;el.className="status show "+type;
+}
+function esc(v){
+const d=document.createElement("div");d.textContent=v==null?"":String(v);return d.innerHTML;
+}
+function dateObj(v){
+if(v==null||String(v).trim()==="")return null;
+let x=String(v).trim();
+if(x==="0000-00-00"||x==="0000-00-00 00:00:00")return null;
+let m;
+if((m=x.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
+if((m=x.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/))) return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
+const d=new Date(x);
+return isNaN(d)?null:d;
+}
+function dateID(v){
+const d=dateObj(v);return d?d.toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"}):"-";
+}
+function age(v){
+const d=dateObj(v);if(!d)return "-";
+const n=new Date();let a=n.getFullYear()-d.getFullYear();
+const m=n.getMonth()-d.getMonth();
+if(m<0||(m===0&&n.getDate()<d.getDate()))a--;
+return a;
+}
+
+/* Supabase REST/PostgREST biasanya mengembalikan maksimal 1000 baris.
+   Kita ambil bertahap menggunakan range() sampai batch terakhir. */
+async function loadAllData(){
+showStatus("Memuat seluruh data jemaat...","loading");
+allData=[];
+let from=0,batch=1000;
+try{
+while(true){
+const {data,error}=await db.from("jemaat")
+.select("*").order("id",{ascending:true}).range(from,from+batch-1);
+if(error)throw error;
+const rows=data||[];
+allData.push(...rows);
+showStatus("Memuat data... "+allData.length+" data","loading");
+if(rows.length<batch)break;
+from+=batch;
+}
+filtered=[...allData];page=1;
+updateStats();
+updateLPFilter();
+renderAll();
+
+renderBirthdays();
+renderMarriages();
+showStatus("Berhasil memuat "+allData.length.toLocaleString("id-ID")+" data.","success");
+}catch(e){
+console.error(e);
+showStatus("Gagal memuat data: "+e.message,"error");
+}
+}
+
+function updateLPFilter(){
+const select=$("lpFilter");
+const current=select.value;
+const lps=[...new Set(allData.map(r=>String(r.ling_pel??"").trim()).filter(Boolean))]
+.sort((a,b)=>a.localeCompare(b,"id"));
+select.innerHTML='<option value="">Semua LP</option>'+lps.map(lp=>`<option value="${esc(lp)}">${esc(lp)}</option>`).join("");
+if(lps.includes(current))select.value=current;
+}
+
+function updateStats(sourceData=allData){
+const data=sourceData||[];
+const total=data.length;
+const l=data.filter(x=>String(x.jk||"").toUpperCase()==="L").length;
+const p=data.filter(x=>String(x.jk||"").toUpperCase()==="P").length;
+const env=new Set(data.map(x=>String(x.ling_pel||"").trim()).filter(Boolean)).size;
+
+const ageGroups=[
+{label:"0-13 TH",min:0,max:13},
+{label:"14-24 TH",min:14,max:24},
+{label:"25-59 TH",min:25,max:59},
+{label:"> 60 TH",min:60,max:Infinity}
+];
+
+const ageCounts=ageGroups.map(g=>data.filter(r=>{
+const a=age(r.tgl_lhr);
+return a!=="-" && a>=g.min && a<=g.max;
+}).length);
+
+$("stats").innerHTML=
+`<div class="card"><div class="label">Total Jemaat</div><div class="value">${total.toLocaleString("id-ID")}</div></div>
+<div class="card"><div class="label">Laki-laki</div><div class="value">${l.toLocaleString("id-ID")}</div></div>
+<div class="card"><div class="label">Perempuan</div><div class="value">${p.toLocaleString("id-ID")}</div></div>
+<div class="card"><div class="label">Lingkungan</div><div class="value">${env}</div></div>`;
+
+$("ageGroups").innerHTML=ageGroups.map((g,i)=>
+`<div class="age-card"><div class="age-label">${g.label}</div><div class="age-value">${ageCounts[i].toLocaleString("id-ID")} jiwa</div></div>`
+).join("");
+}
+function applyFilters(){
+const q=$("search").value.toLowerCase().trim();
+const lp=$("lpFilter").value;
+
+filtered=allData.filter(row=>{
+const okQ=!q||Object.values(row).some(v=>String(v??"").toLowerCase().includes(q));
+const okLP=!lp||String(row.ling_pel??"").trim()===lp;
+return okQ&&okLP;
+});
+
+page=1;
+updateStats(filtered);
+
+const scope=$("statsScope");
+if(scope)scope.textContent=lp
+  ? `📊 Statistik: ${lp}${q?` • Pencarian: "${q}"`:""}`
+  : q
+    ? `📊 Statistik: Semua Lingkungan • Pencarian: "${q}"`
+    : "📊 Statistik: Semua Lingkungan Pelayanan";
+
+renderAll();
+}
+function renderAll(){
+const rows=filtered;
+if(!rows.length){
+$("thead").innerHTML="";$("tbody").innerHTML="";
+$("empty").classList.remove("hidden");$("pagination").innerHTML="";return;
+}
+$("empty").classList.add("hidden");
+
+const headers=Object.keys(rows[0]);
+$("thead").innerHTML=headers.map(h=>`<th>${esc(labels[h]||h)}</th>`).join("");
+
+const start=(page-1)*PER_PAGE;
+const pageRows=rows.slice(start,start+PER_PAGE);
+
+let html="";
+let lastFamily="__FIRST__";
+pageRows.forEach(r=>{
+const family=familyKey(r);
+if(family!==lastFamily){
+html+=`<tr class="family-row"><td colspan="${headers.length}">
+<strong>👨‍👩‍👧‍👦 Keluarga / No. Registrasi: ${esc(family)}</strong>
+<span class="badge">Anggota: ${rows.filter(x=>familyKey(x)===family).length}</span>
+</td></tr>`;
+lastFamily=family;
+}
+html+=`<tr>${headers.map(h=>{
+const v=r[h];
+return `<td>${v==null||v===""||v==="0000-00-00"?"-":esc(h.includes("tgl_")?dateID(v):v)}</td>`;
+}).join("")}</tr>`;
+});
+$("tbody").innerHTML=html;
+renderPagination(Math.ceil(rows.length/PER_PAGE));
+}
+function renderPagination(total){
+let html="";
+if(total<=1){$("pagination").innerHTML="";return}
+html+=`<button onclick="gotoPage(1)">«</button><button onclick="gotoPage(${Math.max(1,page-1)})">‹</button>`;
+let s=Math.max(1,page-2),e=Math.min(total,page+2);
+for(let i=s;i<=e;i++)html+=`<button class="${i===page?"active":""}" onclick="gotoPage(${i})">${i}</button>`;
+html+=`<button onclick="gotoPage(${Math.min(total,page+1)})">›</button><button onclick="gotoPage(${total})">»</button>`;
+$("pagination").innerHTML=html;
+}
+window.gotoPage=function(n){
+const total=Math.ceil(filtered.length/PER_PAGE);if(n<1||n>total)return;
+page=n;renderAll();window.scrollTo({top:0,behavior:"smooth"});
+};
+
+/* Keluarga dikelompokkan berdasarkan No. Registrasi.
+   Anggota dengan nomor registrasi yang sama dianggap satu keluarga. */
+function familyKey(r){
+const reg=String(r.no_reg??"").trim();
+if(!reg)return "Belum ada nomor registrasi";
+return reg;
+}
+function renderFamilies(){
+const map=new Map();
+allData.forEach(r=>{const k=familyKey(r);if(!map.has(k))map.set(k,[]);map.get(k).push(r)});
+const arr=[...map.entries()].sort((a,b)=>a[0].localeCompare(b[0],"id"));
+$("familyInfo").textContent=`Ditemukan ${arr.length.toLocaleString("id-ID")} kelompok keluarga. Dasar pengelompokan: No. Registrasi.`;
+
+$("families").innerHTML=arr.map(([k,members])=>{
+const headers=Object.keys(members[0]);
+return `<div class="group">
+<h3>👨‍👩‍👧‍👦 No. Registrasi: ${esc(k)}</h3>
+<div class="meta">${members.length} anggota</div>
+<div class="table-wrap" style="box-shadow:none;border:1px solid #e7edf2">
+<table><thead><tr>${headers.map(h=>`<th>${esc(labels[h]||h)}</th>`).join("")}</tr></thead>
+<tbody>${members.map(m=>`<tr>${headers.map(h=>{
+const v=m[h];
+return `<td>${v==null||v===""||v==="0000-00-00"?"-":esc(h.includes("tgl_")?dateID(v):v)}</td>`;
+}).join("")}</tr>`).join("")}</tbody></table>
+</div></div>`;
+}).join("");
+}
+const monthNames=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+function setupMonthFilters(){
+const birth=$("birthMonth"), marriage=$("marriageMonth");
+const currentMonth=new Date().getMonth();
+const options='<option value="-1">Semua Bulan</option>'+monthNames.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+birth.innerHTML=options;
+marriage.innerHTML=options;
+birth.value=String(currentMonth);
+marriage.value=String(currentMonth);
+birth.addEventListener("change",renderBirthdays);
+marriage.addEventListener("change",renderMarriages);
+}
+
+function renderBirthdays(){
+const selected=Number($("birthMonth").value);
+let rows=allData.filter(r=>dateObj(r.tgl_lhr));
+if(selected>=0)rows=rows.filter(r=>dateObj(r.tgl_lhr).getMonth()===selected);
+
+rows.sort((a,b)=>{
+const da=dateObj(a.tgl_lhr),db=dateObj(b.tgl_lhr);
+return da.getDate()-db.getDate() ||
+       String(a.nama||"").localeCompare(String(b.nama||""),"id");
+});
+
+const rowsHtml=rows.map(r=>`<tr>
+<td>${esc(r.nama||"-")}</td>
+<td>${esc(r.ling_pel||"-")}</td>
+<td style="text-align:center">${age(r.tgl_lhr)}</td>
+<td style="text-align:center">${dateID(r.tgl_lhr)}</td>
+</tr>`).join("");
+
+const mobileCards=rows.map(r=>`<div class="birthday-card">
+<div class="birthday-card-name">${esc(r.nama||"-")}</div>
+<div class="birthday-card-row">
+<span>LP: <strong>${esc(r.ling_pel||"-")}</strong></span>
+<span class="birthday-card-hut">${age(r.tgl_lhr)}</span>
+</div>
+<div class="birthday-card-row">
+<span>Tanggal lahir</span><strong>${dateID(r.tgl_lhr)}</strong>
+</div>
+</div>`).join("");
+
+$("birthdays").innerHTML=`
+<div class="celebration-heading"><span>🎂 Ulang Tahun Kelahiran</span><span>${selected<0?"Semua Bulan":monthNames[selected]} • ${rows.length} orang</span></div>
+<div class="celebration-table-wrap birthday-desktop">
+<table class="celebration-table">
+<thead><tr><th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th></tr></thead>
+<tbody>${rowsHtml||'<tr><td colspan="4" class="empty">Tidak ada data ulang tahun pada bulan yang dipilih.</td></tr>'}</tbody>
+</table>
+</div>
+<div class="birthday-mobile-cards">
+${mobileCards||'<div class="empty">Tidak ada data ulang tahun pada bulan yang dipilih.</div>'}
+</div>`;
+}
+
+function renderMarriages(){
+const selected=Number($("marriageMonth").value);
+const groups=new Map();
+
+allData.forEach(r=>{
+const d=dateObj(r.tgl_nkh);
+if(!d)return;
+if(selected>=0 && d.getMonth()!==selected)return;
+const reg=String(r.no_reg??"").trim();
+const dateKey=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const key=reg ? `${reg}|${dateKey}` : `__DATE_ONLY__|${dateKey}`;
+if(!groups.has(key))groups.set(key,[]);
+groups.get(key).push(r);
+});
+
+const pairs=[...groups.values()]
+.filter(group=>group.length>=2)
+.sort((a,b)=>{
+const da=dateObj(a[0].tgl_nkh),db=dateObj(b[0].tgl_nkh);
+return da.getDate()-db.getDate() ||
+da.getMonth()-db.getMonth() ||
+String(a[0].nama||"").localeCompare(String(b[0].nama||""),"id");
+});
+
+const pairData=pairs.map(group=>{
+const d=dateObj(group[0].tgl_nkh);
+const today=new Date();
+const years=Math.max(0,today.getFullYear()-d.getFullYear()-
+(today.getMonth()<d.getMonth()||
+(today.getMonth()===d.getMonth()&&today.getDate()<d.getDate())?1:0));
+const names=group.map(r=>String(r.nama||"").trim()).filter(Boolean).join(" & ");
+const lp=String(group[0].ling_pel??"").trim() || "-";
+const address=String(group.find(r=>String(r.alamat??"").trim())?.alamat??"").trim() || "-";
+return {names,lp,years,date:dateID(group[0].tgl_nkh),address};
+});
+
+const rowsHtml=pairData.map(x=>`<tr>
+<td>${esc(x.names)}</td><td style="text-align:center">${esc(x.lp)}</td>
+<td style="text-align:center">${x.years}</td><td style="text-align:center">${esc(x.date)}</td>
+<td>${esc(x.address)}</td></tr>`).join("");
+
+const mobileCards=pairData.map(x=>`<div class="birthday-card">
+<div class="birthday-card-name">${esc(x.names)}</div>
+<div class="birthday-card-row">
+<span>LP: <strong>${esc(x.lp)}</strong></span>
+<span class="birthday-card-hut">${x.years}</span>
+</div>
+<div class="birthday-card-row">
+<span>Tanggal</span><strong>${esc(x.date)}</strong>
+</div>
+<div class="birthday-card-row">
+<span>Alamat</span><strong style="text-align:right">${esc(x.address)}</strong>
+</div>
+</div>`).join("");
+
+$("marriages").innerHTML=`
+<div class="celebration-heading"><span>💍 Ulang Tahun Pernikahan</span><span>${selected<0?"Semua Bulan":monthNames[selected]} • ${pairData.length} pasangan</span></div>
+<div class="celebration-table-wrap birthday-desktop">
+<table class="celebration-table">
+<thead><tr><th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th><th>ALAMAT</th></tr></thead>
+<tbody>${rowsHtml||'<tr><td colspan="5" class="empty">Tidak ada pasangan yang memiliki tanggal pernikahan yang sama pada bulan yang dipilih.</td></tr>'}</tbody>
+</table>
+</div>
+<div class="birthday-mobile-cards">
+${mobileCards||'<div class="empty">Tidak ada pasangan yang memiliki tanggal pernikahan yang sama pada bulan yang dipilih.</div>'}
+</div>`;
+}
+
+function switchView(view){
+currentView=view;
+document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+["all","birthday","marriage"].forEach(v=>$("view-"+v).classList.toggle("hidden",v!==view));
+$("search").closest(".panel").classList.toggle("view-special-hidden",view==="birthday"||view==="marriage");
+if(view==="all")applyFilters();
+}
+
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
+$("search").addEventListener("input",applyFilters);
+setupMonthFilters();
+$("lpFilter").addEventListener("change",applyFilters);
+window.resetFilters=function(){
+$("search").value="";
+$("lpFilter").value="";
+applyFilters();
+};
+window.loadAllData=loadAllData;
+
+loadAllData();
+})();
+</script>
+</body>
+</html>

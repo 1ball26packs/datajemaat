@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Data Jemaat GKE Efrata</title>
+<title>Data Jemaat GKE Bukit Hindu</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f6fa;color:#263238;padding:14px}
@@ -45,17 +45,48 @@ tr:hover td{background:#f8fbff}.family-row td{background:#eaf3ff!important;color
 .badge{display:inline-block;padding:3px 7px;border-radius:20px;background:#e8f2ff;color:#1565c0;font-size:11px}
 .section-title{font-size:18px;font-weight:750;margin-bottom:12px;color:#17324d}
 .month-title{font-size:14px;color:#546e7a;margin:15px 0 8px;font-weight:700}
+
 .hidden{display:none}
+
+.celebration-table-wrap{overflow:auto;background:#fff;border-radius:12px;box-shadow:0 3px 12px #0000000d}
+.celebration-table{width:100%;min-width:720px;border-collapse:collapse}
+.celebration-table th,.celebration-table td{padding:8px 10px;border:1px solid #263238;text-align:left;font-size:13px;white-space:nowrap}
+.celebration-table th{text-align:center;background:#f7f9fb;font-weight:800}
+.celebration-table td:nth-child(2),.celebration-table td:nth-child(3){text-align:center}
+.birthday-pair-table{min-width:900px}
+.birthday-pair-table th,.birthday-pair-table td{width:12.5%}
+.celebration-heading{font-size:16px;font-weight:800;margin:4px 0 8px;color:#17324d}
+.celebration-name{font-size:20px;font-weight:800;color:#17324d;line-height:1.3}
+.celebration-v{margin:10px auto;color:#78909c;font-weight:700;font-size:18px}
+.celebration-age{font-size:52px;line-height:1;font-weight:900;color:#1976d2;margin:4px 0 8px}
+.celebration-date{font-size:16px;font-weight:700;color:#37474f}
+.celebration-place{font-size:13px;color:#78909c;margin-top:9px}
+
 @media(max-width:700px){
 body{padding:8px}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:20px}
-.card .value{font-size:22px}nav button{padding:9px 12px}.panel{padding:12px}
+.card .value{font-size:22px}nav{gap:6px}nav button{padding:9px 12px}.panel{padding:12px}
+.controls{display:grid;grid-template-columns:1fr;gap:8px}
+.controls input,.controls select,.controls button{width:100%;min-width:0}
+.birthday-grid{grid-template-columns:1fr}
+
+.celebration-table-wrap{overflow:auto;background:#fff;border-radius:12px;box-shadow:0 3px 12px #0000000d}
+.celebration-table{width:100%;min-width:720px;border-collapse:collapse}
+.celebration-table th,.celebration-table td{padding:8px 10px;border:1px solid #263238;text-align:left;font-size:13px;white-space:nowrap}
+.celebration-table th{text-align:center;background:#f7f9fb;font-weight:800}
+.celebration-table td:nth-child(2),.celebration-table td:nth-child(3){text-align:center}
+.birthday-pair-table{min-width:900px}
+.birthday-pair-table th,.birthday-pair-table td{width:12.5%}
+.celebration-heading{font-size:16px;font-weight:800;margin:4px 0 8px;color:#17324d}
+.celebration-card{padding:18px 14px}
+.celebration-name{font-size:19px}
+.celebration-age{font-size:46px}
 }
 </style>
 </head>
 <body>
 <div class="container">
 <header>
-<h1>📋 Data Jemaat GKE Efrata</h1>
+<h1>📋 Data Jemaat GKE Bukit Hindu</h1>
 <div class="subtitle">Dashboard data jemaat • seluruh data dimuat bertahap dari Supabase</div>
 </header>
 
@@ -63,14 +94,14 @@ body{padding:8px}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:20px}
 
 <nav>
 <button class="active" data-view="all">👥 Semua Jemaat</button>
-<button data-view="family">👨‍👩‍👧‍👦 Per Keluarga</button>
 <button data-view="birthday">🎂 Ulang Tahun</button>
 <button data-view="marriage">💍 Pernikahan</button>
 </nav>
 
 <div class="panel">
-<div class="controls">
-<input id="search" placeholder="Cari nama, no registrasi, alamat, lingkungan..." autocomplete="off">
+<div class="controls" role="search" onsubmit="return false;">
+<input id="search" placeholder="Cari nama, no registrasi, alamat..." autocomplete="off">
+<select id="lpFilter" aria-label="Filter Lingkungan Pelayanan"><option value="">Semua LP</option></select>
 <button class="action secondary" onclick="resetFilters()">Reset</button>
 <button class="action" onclick="loadAllData()">🔄 Refresh</button>
 </div>
@@ -86,21 +117,26 @@ body{padding:8px}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:20px}
 <div id="pagination" class="pagination"></div>
 </section>
 
-<section id="view-family" class="hidden">
-<div class="section-title">Data Per Keluarga</div>
-<div id="familyInfo" class="status show success"></div>
-<div id="families" class="family-grid"></div>
-</section>
 
 
 
 <section id="view-birthday" class="hidden">
-<div class="section-title">🎂 Ulang Tahun</div>
+<div class="section-title">🎂 Ulang Tahun Kelahiran</div>
+<div class="panel" style="padding:12px;margin-bottom:12px">
+<div class="controls">
+<select id="birthMonth" aria-label="Pilih bulan ulang tahun kelahiran"></select>
+</div>
+</div>
 <div id="birthdays"></div>
 </section>
 
 <section id="view-marriage" class="hidden">
 <div class="section-title">💍 Ulang Tahun Pernikahan</div>
+<div class="panel" style="padding:12px;margin-bottom:12px">
+<div class="controls">
+<select id="marriageMonth" aria-label="Pilih bulan ulang tahun pernikahan"></select>
+</div>
+</div>
 <div id="marriages"></div>
 </section>
 </div>
@@ -175,8 +211,9 @@ from+=batch;
 }
 filtered=[...allData];page=1;
 updateStats();
+updateLPFilter();
 renderAll();
-renderFamilies();
+
 renderBirthdays();
 renderMarriages();
 showStatus("Berhasil memuat "+allData.length.toLocaleString("id-ID")+" data.","success");
@@ -184,6 +221,15 @@ showStatus("Berhasil memuat "+allData.length.toLocaleString("id-ID")+" data.","s
 console.error(e);
 showStatus("Gagal memuat data: "+e.message,"error");
 }
+}
+
+function updateLPFilter(){
+const select=$("lpFilter");
+const current=select.value;
+const lps=[...new Set(allData.map(r=>String(r.ling_pel??"").trim()).filter(Boolean))]
+.sort((a,b)=>a.localeCompare(b,"id"));
+select.innerHTML='<option value="">Semua LP</option>'+lps.map(lp=>`<option value="${esc(lp)}">${esc(lp)}</option>`).join("");
+if(lps.includes(current))select.value=current;
 }
 
 function updateStats(){
@@ -200,9 +246,11 @@ $("stats").innerHTML=
 
 function applyFilters(){
 const q=$("search").value.toLowerCase().trim();
+const lp=$("lpFilter").value;
 filtered=allData.filter(row=>{
 const okQ=!q||Object.values(row).some(v=>String(v??"").toLowerCase().includes(q));
-return okQ;
+const okLP=!lp||String(row.ling_pel??"").trim()===lp;
+return okQ&&okLP;
 });
 page=1;renderAll();
 }
@@ -281,58 +329,143 @@ return `<td>${v==null||v===""||v==="0000-00-00"?"-":esc(h.includes("tgl_")?dateI
 </div></div>`;
 }).join("");
 }
+const monthNames=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+function setupMonthFilters(){
+const birth=$("birthMonth"), marriage=$("marriageMonth");
+const currentMonth=new Date().getMonth();
+const options='<option value="-1">Semua Bulan</option>'+monthNames.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+birth.innerHTML=options;
+marriage.innerHTML=options;
+birth.value=String(currentMonth);
+marriage.value=String(currentMonth);
+birth.addEventListener("change",renderBirthdays);
+marriage.addEventListener("change",renderMarriages);
+}
+
 function renderBirthdays(){
-const today=new Date();
-const rows=allData.filter(r=>dateObj(r.tgl_lhr))
-.sort((a,b)=>{
+const selected=Number($("birthMonth").value);
+let rows=allData.filter(r=>dateObj(r.tgl_lhr));
+if(selected>=0)rows=rows.filter(r=>dateObj(r.tgl_lhr).getMonth()===selected);
+rows.sort((a,b)=>{
 const da=dateObj(a.tgl_lhr),db=dateObj(b.tgl_lhr);
-const ma=(da.getMonth()-today.getMonth()+12)%12, mb=(db.getMonth()-today.getMonth()+12)%12;
-return ma-mb || da.getDate()-db.getDate();
+return da.getDate()-db.getDate() || String(a.nama||"").localeCompare(String(b.nama||""),"id");
 });
-const current=rows.filter(r=>dateObj(r.tgl_lhr).getMonth()===today.getMonth());
-const upcoming=rows.filter(r=>dateObj(r.tgl_lhr).getMonth()!==today.getMonth());
-const card=r=>`<div class="group"><h3>${esc(r.nama||"-")}</h3>
-<div class="meta">🎂 ${dateID(r.tgl_lhr)} • Usia ${age(r.tgl_lhr)} tahun</div>
-<div class="member">${esc(r.ling_pel||"Lingkungan belum diisi")}</div></div>`;
+
+const cells=rows.map(r=>`<tr>
+<td>${esc(r.nama||"-")}</td>
+<td>${esc(r.ling_pel||"-")}</td>
+<td>${age(r.tgl_lhr)}</td>
+<td>${dateID(r.tgl_lhr)}</td>
+</tr>`).join("");
+
+const pairs=[];
+for(let i=0;i<rows.length;i+=2)pairs.push([rows[i],rows[i+1]]);
+
+const pairRows=pairs.map(([a,b])=>`<tr>
+<td>${a?esc(a.nama||"-"):""}</td><td>${a?esc(a.ling_pel||"-"):""}</td><td>${a?age(a.tgl_lhr):""}</td><td>${a?dateID(a.tgl_lhr):""}</td>
+<td>${b?esc(b.nama||"-"):""}</td><td>${b?esc(b.ling_pel||"-"):""}</td><td>${b?age(b.tgl_lhr):""}</td><td>${b?dateID(b.tgl_lhr):""}</td>
+</tr>`).join("");
+
 $("birthdays").innerHTML=`
-<div class="month-title">🎂 Bulan Ini — ${current.length} orang</div>
-<div class="birthday-grid">${current.length?current.map(card).join(""):'<div class="empty">Tidak ada ulang tahun bulan ini.</div>'}</div>
-<div class="month-title">📅 Ulang Tahun Berikutnya</div>
-<div class="birthday-grid">${upcoming.slice(0,100).length?upcoming.slice(0,100).map(card).join(""):'<div class="empty">Tidak ada data tanggal lahir.</div>'}</div>`;
+<div class="celebration-heading">🎂 Ulang Tahun Kelahiran — ${selected<0?"Semua Bulan":monthNames[selected]} (${rows.length} orang)</div>
+<div class="celebration-table-wrap">
+<table class="celebration-table birthday-pair-table">
+<thead><tr>
+<th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th>
+<th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th>
+</tr></thead>
+<tbody>${pairRows||'<tr><td colspan="8" class="empty">Tidak ada data ulang tahun pada bulan ini.</td></tr>'}</tbody>
+</table>
+</div>`;
 }
+
 function renderMarriages(){
-const today=new Date();
-const rows=allData.filter(r=>dateObj(r.tgl_nkh))
-.sort((a,b)=>{
-const da=dateObj(a.tgl_nkh),db=dateObj(b.tgl_nkh);
-const ma=(da.getMonth()-today.getMonth()+12)%12, mb=(db.getMonth()-today.getMonth()+12)%12;
-return ma-mb || da.getDate()-db.getDate();
-});
-const current=rows.filter(r=>dateObj(r.tgl_nkh).getMonth()===today.getMonth());
-const upcoming=rows.filter(r=>dateObj(r.tgl_nkh).getMonth()!==today.getMonth());
-const card=r=>{
+const selected=Number($("marriageMonth").value);
+
+/*
+  Pasangan pernikahan ditentukan dari:
+  1. No. Registrasi yang sama, dan
+  2. Tanggal pernikahan yang sama.
+  Hanya kelompok yang memiliki minimal 2 anggota yang ditampilkan.
+*/
+const groups=new Map();
+
+allData.forEach(r=>{
 const d=dateObj(r.tgl_nkh);
-const years=Math.max(0,today.getFullYear()-d.getFullYear()-(today.getMonth()<d.getMonth()||(today.getMonth()===d.getMonth()&&today.getDate()<d.getDate())?1:0));
-return `<div class="group"><h3>${esc(r.nama||"-")}</h3>
-<div class="meta">💍 ${dateID(r.tgl_nkh)} • ${years} tahun pernikahan</div>
-<div class="member">${esc(r.tpt_nkh||"")} ${r.ling_pel?"• "+esc(r.ling_pel):""}</div></div>`;
-};
+if(!d)return;
+if(selected>=0 && d.getMonth()!==selected)return;
+
+const reg=String(r.no_reg??"").trim();
+const dateKey=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const key=reg ? `${reg}|${dateKey}` : `__DATE_ONLY__|${dateKey}`;
+
+if(!groups.has(key))groups.set(key,[]);
+groups.get(key).push(r);
+});
+
+const pairs=[...groups.values()]
+.filter(group=>group.length>=2)
+.sort((a,b)=>{
+const da=dateObj(a[0].tgl_nkh),db=dateObj(b[0].tgl_nkh);
+return da.getDate()-db.getDate() ||
+       da.getMonth()-db.getMonth() ||
+       String(a[0].nama||"").localeCompare(String(b[0].nama||""),"id");
+});
+
+const rowsHtml=pairs.map(group=>{
+const d=dateObj(group[0].tgl_nkh);
+const today=new Date();
+const years=Math.max(0,today.getFullYear()-d.getFullYear()-
+(today.getMonth()<d.getMonth()||
+(today.getMonth()===d.getMonth()&&today.getDate()<d.getDate())?1:0));
+
+/* Gabungkan nama suami & istri menjadi satu kolom. */
+const names=group
+.map(r=>String(r.nama||"").trim())
+.filter(Boolean)
+.join(" & ");
+
+const lp=String(group[0].ling_pel??"").trim() || "-";
+const address=String(group.find(r=>String(r.alamat??"").trim())?.alamat??"").trim() || "-";
+
+return `<tr>
+<td>${esc(names||"-")}</td>
+<td style="text-align:center">${esc(lp)}</td>
+<td style="text-align:center">${years}</td>
+<td style="text-align:center">${dateID(group[0].tgl_nkh)}</td>
+<td>${esc(address)}</td>
+</tr>`;
+}).join("");
+
 $("marriages").innerHTML=`
-<div class="month-title">💍 Bulan Ini — ${current.length} data</div>
-<div class="birthday-grid">${current.length?current.map(card).join(""):'<div class="empty">Tidak ada ulang tahun pernikahan bulan ini.</div>'}</div>
-<div class="month-title">📅 Ulang Tahun Pernikahan Berikutnya</div>
-<div class="birthday-grid">${upcoming.slice(0,100).length?upcoming.slice(0,100).map(card).join(""):'<div class="empty">Tidak ada data tanggal pernikahan.</div>'}</div>`;
+<div class="celebration-heading">💍 Ulang Tahun Pernikahan — ${selected<0?"Semua Bulan":monthNames[selected]} (${pairs.length} pasangan)</div>
+<div class="celebration-table-wrap">
+<table class="celebration-table">
+<thead><tr><th>NAMA</th><th>LP</th><th>HUT KE</th><th>TANGGAL</th><th>ALAMAT</th></tr></thead>
+<tbody>${rowsHtml||'<tr><td colspan="5" class="empty">Tidak ada pasangan yang memiliki tanggal pernikahan yang sama pada bulan ini.</td></tr>'}</tbody>
+</table>
+</div>`;
 }
+
 function switchView(view){
 currentView=view;
 document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
-["all","family","birthday","marriage"].forEach(v=>$("view-"+v).classList.toggle("hidden",v!==view));
+["all","birthday","marriage"].forEach(v=>$("view-"+v).classList.toggle("hidden",v!==view));
 if(view==="all")applyFilters();
 }
 
 document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
 $("search").addEventListener("input",applyFilters);
-window.resetFilters=function(){$("search").value="";filtered=[...allData];page=1;renderAll()};
+setupMonthFilters();
+$("lpFilter").addEventListener("change",applyFilters);
+window.resetFilters=function(){
+$("search").value="";
+$("lpFilter").value="";
+filtered=[...allData];
+page=1;
+renderAll();
+};
 window.loadAllData=loadAllData;
 
 loadAllData();

@@ -1,527 +1,335 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Jemaat - Viewer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 1rem;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 0.5rem;
-            color: #2c3e50;
-        }
-
-        .subtitle {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-
-        .controls {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #bdc3c7;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border 0.3s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
-        }
-
-        button {
-            padding: 0.75rem 1.5rem;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: #2980b9;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .status-message {
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .status-message.show {
-            display: block;
-        }
-
-        .status-message.loading {
-            background: #e3f2fd;
-            color: #1976d2;
-            border-left: 4px solid #1976d2;
-        }
-
-        .status-message.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 4px solid #2e7d32;
-        }
-
-        .status-message.error {
-            background: #ffebee;
-            color: #c62828;
-            border-left: 4px solid #c62828;
-        }
-
-        .table-wrapper {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-
-        thead {
-            background: #f8f9fa;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 2px solid #e9ecef;
-            white-space: nowrap;
-            user-select: none;
-        }
-
-        td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #e9ecef;
-            color: #555;
-        }
-
-        tbody tr:hover {
-            background: #f8f9fa;
-        }
-
-        tbody tr.highlight {
-            background: #fff3cd;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: #7f8c8d;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 1.5rem;
-            background: white;
-            margin-top: 1rem;
-            border-radius: 8px;
-            flex-wrap: wrap;
-        }
-
-        .pagination button {
-            padding: 0.5rem 0.75rem;
-            min-width: 40px;
-        }
-
-        .pagination button.active {
-            background: #2c3e50;
-        }
-
-        .pagination button:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        .stat-card .label {
-            font-size: 12px;
-            color: #7f8c8d;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card .value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #3498db;
-        }
-
-        @media (max-width: 768px) {
-            header {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
-
-            .search-box {
-                min-width: 100%;
-            }
-
-            th, td {
-                padding: 0.5rem;
-                font-size: 13px;
-            }
-
-            table {
-                font-size: 12px;
-            }
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            vertical-align: middle;
-            margin-right: 0.5rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data Jemaat GKE Efrata</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f6fa;color:#263238;padding:14px}
+.container{max-width:1400px;margin:auto}
+header,.panel,.card,.table-wrap{background:#fff;border-radius:14px;box-shadow:0 3px 15px #00000012}
+header{padding:20px;margin-bottom:14px}
+h1{font-size:25px;color:#17324d}
+.subtitle{color:#78909c;font-size:13px;margin-top:5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.card{padding:16px;text-align:center}
+.card .label{font-size:12px;color:#78909c;text-transform:uppercase}
+.card .value{font-size:26px;font-weight:800;color:#1976d2;margin-top:4px}
+nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}
+nav button{border:0;background:#e8eef5;color:#34495e;padding:11px 16px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600}
+nav button.active{background:#1976d2;color:#fff}
+.panel{padding:16px;margin-bottom:14px}
+.controls{display:flex;gap:10px;flex-wrap:wrap}
+input,select{padding:11px 13px;border:1px solid #ccd6df;border-radius:9px;font-size:14px;background:#fff}
+input{flex:1;min-width:220px}
+button.action{padding:11px 15px;border:0;border-radius:9px;background:#1976d2;color:white;cursor:pointer}
+button.action.secondary{background:#607d8b}
+.status{margin:10px 0;padding:10px;border-radius:8px;font-size:13px;display:none}
+.status.show{display:block}.status.loading{background:#e3f2fd;color:#1565c0}.status.error{background:#ffebee;color:#c62828}.status.success{background:#e8f5e9;color:#2e7d32}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{padding:11px 12px;border-bottom:1px solid #e8edf1;text-align:left;font-size:13px}
+th{background:#f7f9fb;color:#455a64;position:sticky;top:0;z-index:2}
+tr:hover td{background:#f8fbff}
+.empty{text-align:center;padding:40px;color:#90a4ae}
+.pagination{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:12px}
+.pagination button{border:0;padding:8px 11px;border-radius:7px;background:#e4eaf0;cursor:pointer}
+.pagination button.active{background:#1976d2;color:#fff}
+.family-grid,.env-grid,.birthday-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.group{border:1px solid #e2e8ee;border-radius:12px;padding:14px;background:#fff}
+.group h3{font-size:16px;color:#263238;margin-bottom:7px}
+.group .meta{font-size:12px;color:#78909c;margin-bottom:10px}
+.member{padding:7px 0;border-top:1px solid #edf1f4;font-size:13px}
+.member b{display:block}
+.badge{display:inline-block;padding:3px 7px;border-radius:20px;background:#e8f2ff;color:#1565c0;font-size:11px}
+.section-title{font-size:18px;font-weight:750;margin-bottom:12px;color:#17324d}
+.month-title{font-size:14px;color:#546e7a;margin:15px 0 8px;font-weight:700}
+.hidden{display:none}
+@media(max-width:700px){
+body{padding:8px}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:20px}
+.card .value{font-size:22px}nav button{padding:9px 12px}.panel{padding:12px}
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📋 Data Jemaat GKE Efrata</h1>
-            <p class="subtitle">Data congregational members - Updated: <span id="update-time">-</span></p>
-        </header>
+<div class="container">
+<header>
+<h1>📋 Data Jemaat GKE Efrata</h1>
+<div class="subtitle">Dashboard data jemaat • seluruh data dimuat bertahap dari Supabase</div>
+</header>
 
-        <div class="stats" id="stats-container"></div>
+<div class="stats" id="stats"></div>
 
-        <div class="controls">
-            <div class="search-box">
-                <input 
-                    type="text" 
-                    id="search-input" 
-                    placeholder="Cari nama, no_reg, alamat... (live search)"
-                    autocomplete="off"
-                >
-            </div>
-            <button onclick="window.dataApp.resetSearch()">Reset</button>
-            <button onclick="window.dataApp.refreshData()">🔄 Refresh</button>
-        </div>
+<nav>
+<button class="active" data-view="all">👥 Semua Jemaat</button>
+<button data-view="family">👨‍👩‍👧‍👦 Per Keluarga</button>
+<button data-view="environment">⛪ Lingkungan</button>
+<button data-view="birthday">🎂 Ulang Tahun</button>
+<button data-view="marriage">💍 Pernikahan</button>
+</nav>
 
-        <div id="status-message" class="status-message"></div>
+<div class="panel">
+<div class="controls">
+<input id="search" placeholder="Cari nama, no registrasi, alamat, lingkungan..." autocomplete="off">
+<select id="envFilter"><option value="">Semua lingkungan</option></select>
+<button class="action secondary" onclick="resetFilters()">Reset</button>
+<button class="action" onclick="loadAllData()">🔄 Refresh</button>
+</div>
+<div id="status" class="status"></div>
+</div>
 
-        <div class="table-wrapper">
-            <table id="data-table">
-                <thead id="table-head"></thead>
-                <tbody id="table-body"></tbody>
-            </table>
-            <div id="empty-state" class="empty-state" style="display: none;">
-                <p>Tidak ada data</p>
-            </div>
-        </div>
+<section id="view-all">
+<div class="section-title">Daftar Jemaat</div>
+<div class="table-wrap">
+<table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+<div id="empty" class="empty hidden">Tidak ada data.</div>
+</div>
+<div id="pagination" class="pagination"></div>
+</section>
 
-        <div class="pagination" id="pagination-controls"></div>
-    </div>
+<section id="view-family" class="hidden">
+<div class="section-title">Data Per Keluarga</div>
+<div id="familyInfo" class="status show success"></div>
+<div id="families" class="family-grid"></div>
+</section>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // IIFE - Isolated scope to prevent duplicate declaration
-        (function() {
-            const SUPABASE_URL = 'https://gpgjgplqsvyexumoljyo.supabase.co';
-            const SUPABASE_KEY = 'sb_publishable_JaVgg3CuVmI9SczGkoaRZQ_EaYoV9z9';
-            
-            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<section id="view-environment" class="hidden">
+<div class="section-title">Data Per Lingkungan Jemaat</div>
+<div id="environments" class="env-grid"></div>
+</section>
 
-            let allData = [];
-            let filteredData = [];
-            let currentPage = 1;
-            const itemsPerPage = 20;
+<section id="view-birthday" class="hidden">
+<div class="section-title">🎂 Ulang Tahun</div>
+<div id="birthdays"></div>
+</section>
 
-            const columnLabels = {
-                id: 'ID',
-                no_reg: 'No. Registrasi',
-                nama: 'Nama',
-                jk: 'JK',
-                tpt_lhr: 'Tempat Lahir',
-                tgl_lhr: 'Tanggal Lahir',
-                tpt_nkh: 'Tempat Nikah',
-                tgl_nkh: 'Tanggal Nikah',
-                alamat: 'Alamat',
-                ling_pel: 'Lingkungan Pelayanan',
-                status: 'Status'
-            };
+<section id="view-marriage" class="hidden">
+<div class="section-title">💍 Ulang Tahun Pernikahan</div>
+<div id="marriages"></div>
+</section>
+</div>
 
-            async function loadData() {
-                showStatus('Memuat data...', 'loading');
-                try {
-                    const { data, error } = await supabase
-                        .from('jemaat')
-                        .select('*')
-                        .order('id', { ascending: true });
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+"use strict";
 
-                    if (error) throw error;
+const SUPABASE_URL="https://gpgjgplqsvyexumoljyo.supabase.co";
+const SUPABASE_KEY="sb_publishable_JaVgg3CuVmI9SczGkoaRZQ_EaYoV9z9";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-                    allData = data || [];
-                    filteredData = [...allData];
-                    currentPage = 1;
-                    
-                    renderTable();
-                    updateStats();
-                    updateLastUpdate();
-                    showStatus('Data berhasil dimuat', 'success', 2000);
-                } catch (error) {
-                    console.error('Error:', error);
-                    showStatus(`Error: ${error.message}`, 'error');
-                }
-            }
+let allData=[];
+let filtered=[];
+let page=1;
+const PER_PAGE=25;
+let currentView="all";
 
-            function renderTable() {
-                const thead = document.getElementById('table-head');
-                const tbody = document.getElementById('table-body');
-                const emptyState = document.getElementById('empty-state');
+const labels={
+id:"ID",no_reg:"No. Registrasi",nama:"Nama",jk:"JK",
+tpt_lhr:"Tempat Lahir",tgl_lhr:"Tanggal Lahir",
+tpt_nkh:"Tempat Nikah",tgl_nkh:"Tanggal Nikah",
+alamat:"Alamat",ling_pel:"Lingkungan Pelayanan",status:"Status"
+};
 
-                if (filteredData.length === 0) {
-                    emptyState.style.display = 'block';
-                    thead.innerHTML = '';
-                    tbody.innerHTML = '';
-                    document.getElementById('pagination-controls').innerHTML = '';
-                    return;
-                }
+const $=id=>document.getElementById(id);
 
-                emptyState.style.display = 'none';
+function showStatus(msg,type="success"){
+const el=$("status");el.textContent=msg;el.className="status show "+type;
+}
+function esc(v){
+const d=document.createElement("div");d.textContent=v==null?"":String(v);return d.innerHTML;
+}
+function dateObj(v){
+if(!v)return null;
+const d=new Date(String(v).length<=10?String(v)+"T00:00:00":v);
+return isNaN(d)?null:d;
+}
+function dateID(v){
+const d=dateObj(v);return d?d.toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"}):"-";
+}
+function age(v){
+const d=dateObj(v);if(!d)return "-";
+const n=new Date();let a=n.getFullYear()-d.getFullYear();
+const m=n.getMonth()-d.getMonth();
+if(m<0||(m===0&&n.getDate()<d.getDate()))a--;
+return a;
+}
 
-                const headers = Object.keys(filteredData[0]);
-                thead.innerHTML = headers.map(header => 
-                    `<th>${columnLabels[header] || header}</th>`
-                ).join('');
+/* Supabase REST/PostgREST biasanya mengembalikan maksimal 1000 baris.
+   Kita ambil bertahap menggunakan range() sampai batch terakhir. */
+async function loadAllData(){
+showStatus("Memuat seluruh data jemaat...","loading");
+allData=[];
+let from=0,batch=1000;
+try{
+while(true){
+const {data,error}=await db.from("jemaat")
+.select("*").order("id",{ascending:true}).range(from,from+batch-1);
+if(error)throw error;
+const rows=data||[];
+allData.push(...rows);
+showStatus("Memuat data... "+allData.length+" data","loading");
+if(rows.length<batch)break;
+from+=batch;
+}
+filtered=[...allData];page=1;
+buildEnvironmentFilter();
+updateStats();
+renderAll();
+renderFamilies();
+renderEnvironments();
+renderBirthdays();
+renderMarriages();
+showStatus("Berhasil memuat "+allData.length.toLocaleString("id-ID")+" data.","success");
+}catch(e){
+console.error(e);
+showStatus("Gagal memuat data: "+e.message,"error");
+}
+}
 
-                const start = (currentPage - 1) * itemsPerPage;
-                const end = start + itemsPerPage;
-                const pageData = filteredData.slice(start, end);
+function updateStats(){
+const total=allData.length;
+const l=allData.filter(x=>String(x.jk||"").toUpperCase()==="L").length;
+const p=allData.filter(x=>String(x.jk||"").toUpperCase()==="P").length;
+const env=new Set(allData.map(x=>String(x.ling_pel||"").trim()).filter(Boolean)).size;
+$("stats").innerHTML=
+`<div class="card"><div class="label">Total Jemaat</div><div class="value">${total.toLocaleString("id-ID")}</div></div>
+<div class="card"><div class="label">Laki-laki</div><div class="value">${l.toLocaleString("id-ID")}</div></div>
+<div class="card"><div class="label">Perempuan</div><div class="value">${p.toLocaleString("id-ID")}</div></div>
+<div class="card"><div class="label">Lingkungan</div><div class="value">${env}</div></div>`;
+}
 
-                tbody.innerHTML = pageData.map(row => 
-                    `<tr>${headers.map(header => {
-                        let value = row[header];
-                        if (value === null || value === undefined || value === '0000-00-00' || value === '') {
-                            return '<td>-</td>';
-                        }
-                        return `<td>${escapeHtml(String(value))}</td>`;
-                    }).join('')}</tr>`
-                ).join('');
+function buildEnvironmentFilter(){
+const vals=[...new Set(allData.map(x=>String(x.ling_pel||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"id"));
+$("envFilter").innerHTML='<option value="">Semua lingkungan</option>'+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
+}
 
-                renderPagination();
-            }
+function applyFilters(){
+const q=$("search").value.toLowerCase().trim(), env=$("envFilter").value;
+filtered=allData.filter(row=>{
+const okEnv=!env||String(row.ling_pel||"").trim()===env;
+const okQ=!q||Object.values(row).some(v=>String(v??"").toLowerCase().includes(q));
+return okEnv&&okQ;
+});
+page=1;renderAll();
+}
 
-            function renderPagination() {
-                const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-                const controls = document.getElementById('pagination-controls');
+function renderAll(){
+const rows=filtered;
+if(!rows.length){
+$("thead").innerHTML="";$("tbody").innerHTML="";$("empty").classList.remove("hidden");$("pagination").innerHTML="";return;
+}
+$("empty").classList.add("hidden");
+const headers=Object.keys(rows[0]);
+$("thead").innerHTML=headers.map(h=>`<th>${esc(labels[h]||h)}</th>`).join("");
+const start=(page-1)*PER_PAGE;
+$("tbody").innerHTML=rows.slice(start,start+PER_PAGE).map(r=>
+`<tr>${headers.map(h=>{
+const v=r[h];
+return `<td>${v==null||v===""||v==="0000-00-00"?"-":esc(h.includes("tgl_")?dateID(v):v)}</td>`;
+}).join("")}</tr>`).join("");
+renderPagination(Math.ceil(rows.length/PER_PAGE));
+}
 
-                if (totalPages <= 1) {
-                    controls.innerHTML = '';
-                    return;
-                }
+function renderPagination(total){
+let html="";
+if(total<=1){$("pagination").innerHTML="";return}
+html+=`<button onclick="gotoPage(1)">«</button><button onclick="gotoPage(${Math.max(1,page-1)})">‹</button>`;
+let s=Math.max(1,page-2),e=Math.min(total,page+2);
+for(let i=s;i<=e;i++)html+=`<button class="${i===page?"active":""}" onclick="gotoPage(${i})">${i}</button>`;
+html+=`<button onclick="gotoPage(${Math.min(total,page+1)})">›</button><button onclick="gotoPage(${total})">»</button>`;
+$("pagination").innerHTML=html;
+}
+window.gotoPage=function(n){
+const total=Math.ceil(filtered.length/PER_PAGE);if(n<1||n>total)return;
+page=n;renderAll();window.scrollTo({top:0,behavior:"smooth"});
+};
 
-                let html = '<button onclick="window.dataApp.goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>«</button>';
-                html += '<button onclick="window.dataApp.goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>‹</button>';
+/* Keluarga:
+   Jika database memiliki field no_kk / no_keluarga / id_keluarga,
+   otomatis digunakan. Jika tidak ada, dikelompokkan dengan alamat.
+   Ini sengaja dibuat aman agar tidak mengarang relasi keluarga. */
+function familyKey(r){
+const candidates=["no_kk","no_keluarga","id_keluarga","keluarga_id","kk_id"];
+for(const k of candidates)if(r[k]!=null&&String(r[k]).trim()!=="")return "KK: "+String(r[k]).trim();
+const alamat=String(r.alamat||"").trim();
+return alamat?"Alamat: "+alamat:"Belum ada identitas keluarga";
+}
+function renderFamilies(){
+const map=new Map();
+allData.forEach(r=>{const k=familyKey(r);if(!map.has(k))map.set(k,[]);map.get(k).push(r)});
+const arr=[...map.entries()].sort((a,b)=>a[0].localeCompare(b[0],"id"));
+$("familyInfo").textContent=`Ditemukan ${arr.length.toLocaleString("id-ID")} kelompok keluarga. Jika ingin keluarga berdasarkan nomor KK, pastikan kolom no_kk/no_keluarga tersedia di tabel jemaat.`;
+$("families").innerHTML=arr.map(([k,members])=>{
+const env=[...new Set(members.map(x=>x.ling_pel).filter(Boolean))].join(", ");
+return `<div class="group"><h3>👨‍👩‍👧‍👦 ${esc(k)}</h3>
+<div class="meta">${members.length} anggota${env?" • "+esc(env):""}</div>
+${members.map(m=>`<div class="member"><b>${esc(m.nama||"-")}</b>${esc(m.status||"")} • ${esc(m.jk||"-")}</div>`).join("")}</div>`;
+}).join("");
+}
 
-                const startPage = Math.max(1, currentPage - 2);
-                const endPage = Math.min(totalPages, currentPage + 2);
+function renderEnvironments(){
+const map=new Map();
+allData.forEach(r=>{const k=String(r.ling_pel||"Belum ditentukan").trim()||"Belum ditentukan";if(!map.has(k))map.set(k,[]);map.get(k).push(r)});
+const arr=[...map.entries()].sort((a,b)=>a[0].localeCompare(b[0],"id"));
+$("environments").innerHTML=arr.map(([k,m])=>{
+const l=m.filter(x=>String(x.jk||"").toUpperCase()==="L").length;
+const p=m.filter(x=>String(x.jk||"").toUpperCase()==="P").length;
+return `<div class="group"><h3>⛪ ${esc(k)}</h3><div class="meta">${m.length} anggota • L: ${l} • P: ${p}</div>
+${m.slice(0,30).map(x=>`<div class="member"><b>${esc(x.nama||"-")}</b>${esc(x.status||"")} • ${esc(x.alamat||"")}</div>`).join("")}
+${m.length>30?`<div class="meta">Menampilkan 30 nama pertama.</div>`:""}</div>`;
+}).join("");
+}
 
-                if (startPage > 1) html += '<span style="padding: 0.75rem;">...</span>';
+function monthGroups(items){
+const map=new Map();
+items.forEach(x=>{const d=dateObj(x.date);if(!d)return;const key=d.toLocaleString("id-ID",{month:"long"});if(!map.has(key))map.set(key,[]);map.get(key).push(x)});
+return map;
+}
 
-                for (let i = startPage; i <= endPage; i++) {
-                    html += `<button onclick="window.dataApp.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
-                }
+function renderBirthdays(){
+const today=new Date(), month=today.getMonth();
+const rows=allData.filter(r=>{const d=dateObj(r.tgl_lhr);return d&&d.getMonth()===month})
+.sort((a,b)=>dateObj(a.tgl_lhr)-dateObj(b.tgl_lhr));
+$("birthdays").innerHTML=rows.length?`
+<div class="month-title">🎂 Ulang Tahun Bulan ${today.toLocaleString("id-ID",{month:"long"})} — ${rows.length} orang</div>
+<div class="birthday-grid">${rows.map(r=>`<div class="group"><h3>${esc(r.nama||"-")}</h3>
+<div class="meta">🎂 ${dateID(r.tgl_lhr)} • Usia ${age(r.tgl_lhr)} tahun</div>
+<div class="member">${esc(r.ling_pel||"Lingkungan belum diisi")}</div></div>`).join("")}</div>`:
+`<div class="empty">Tidak ada data ulang tahun bulan ini.</div>`;
+}
 
-                if (endPage < totalPages) html += '<span style="padding: 0.75rem;">...</span>';
+function renderMarriages(){
+const today=new Date(), month=today.getMonth();
+const rows=allData.filter(r=>{const d=dateObj(r.tgl_nkh);return d&&d.getMonth()===month})
+.sort((a,b)=>dateObj(a.tgl_nkh)-dateObj(b.tgl_nkh));
+$("marriages").innerHTML=rows.length?`
+<div class="month-title">💍 Ulang Tahun Pernikahan Bulan ${today.toLocaleString("id-ID",{month:"long"})} — ${rows.length} data</div>
+<div class="birthday-grid">${rows.map(r=>{
+const d=dateObj(r.tgl_nkh),years=today.getFullYear()-d.getFullYear();
+return `<div class="group"><h3>${esc(r.nama||"-")}</h3>
+<div class="meta">💍 ${dateID(r.tgl_nkh)} • ${years} tahun pernikahan</div>
+<div class="member">${esc(r.tpt_nkh||"")} ${r.ling_pel?"• "+esc(r.ling_pel):""}</div></div>`;
+}).join("")}</div>`:
+`<div class="empty">Tidak ada data ulang tahun pernikahan bulan ini.</div>`;
+}
 
-                html += '<button onclick="window.dataApp.goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>›</button>';
-                html += '<button onclick="window.dataApp.goToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>»</button>';
+function switchView(view){
+currentView=view;
+document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+["all","family","environment","birthday","marriage"].forEach(v=>$("view-"+v).classList.toggle("hidden",v!==view));
+if(view==="all")applyFilters();
+}
 
-                controls.innerHTML = html;
-            }
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
+$("search").addEventListener("input",applyFilters);
+$("envFilter").addEventListener("change",applyFilters);
+window.resetFilters=function(){$("search").value="";$("envFilter").value="";filtered=[...allData];page=1;renderAll()};
+window.loadAllData=loadAllData;
 
-            function updateStats() {
-                const statsContainer = document.getElementById('stats-container');
-                const total = filteredData.length;
-                const laki = filteredData.filter(d => d.jk === 'L').length;
-                const perempuan = filteredData.filter(d => d.jk === 'P').length;
-
-                statsContainer.innerHTML = `
-                    <div class="stat-card">
-                        <div class="label">Total Jemaat</div>
-                        <div class="value">${total.toLocaleString('id-ID')}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Laki-laki</div>
-                        <div class="value">${laki}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Perempuan</div>
-                        <div class="value">${perempuan}</div>
-                    </div>
-                `;
-            }
-
-            function updateLastUpdate() {
-                const now = new Date();
-                document.getElementById('update-time').textContent = now.toLocaleString('id-ID');
-            }
-
-            function showStatus(message, type, timeout = 0) {
-                const el = document.getElementById('status-message');
-                el.textContent = message;
-                el.className = `status-message show ${type}`;
-                
-                if (timeout > 0) {
-                    setTimeout(() => {
-                        el.classList.remove('show');
-                    }, timeout);
-                }
-            }
-
-            function escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-
-            // Expose public methods
-            window.dataApp = {
-                goToPage: function(page) {
-                    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-                    if (page >= 1 && page <= totalPages) {
-                        currentPage = page;
-                        renderTable();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                },
-                resetSearch: function() {
-                    document.getElementById('search-input').value = '';
-                    filteredData = [...allData];
-                    currentPage = 1;
-                    renderTable();
-                    updateStats();
-                },
-                refreshData: function() {
-                    loadData();
-                }
-            };
-
-            document.getElementById('search-input').addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase();
-                
-                if (query === '') {
-                    filteredData = [...allData];
-                } else {
-                    filteredData = allData.filter(row => {
-                        return Object.values(row).some(val => 
-                            String(val).toLowerCase().includes(query)
-                        );
-                    });
-                }
-                
-                currentPage = 1;
-                renderTable();
-                updateStats();
-            });
-
-            window.addEventListener('load', loadData);
-        })();
-    </script>
+loadAllData();
+})();
+</script>
 </body>
 </html>

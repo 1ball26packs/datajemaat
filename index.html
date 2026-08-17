@@ -298,8 +298,8 @@
                     autocomplete="off"
                 >
             </div>
-            <button onclick="resetSearch()">Reset</button>
-            <button onclick="refreshData()">🔄 Refresh</button>
+            <button onclick="window.dataApp.resetSearch()">Reset</button>
+            <button onclick="window.dataApp.refreshData()">🔄 Refresh</button>
         </div>
 
         <div id="status-message" class="status-message"></div>
@@ -319,217 +319,209 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ===== CONFIG - CREDENTIALS SUPABASE ANDA =====
-        const SUPABASE_URL = 'https://gpgjgplqsvyexumoljyo.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_JaVgg3CuVmI9SczGkoaRZQ_EaYoV9z9';
-        // =============================================
+        // IIFE - Isolated scope to prevent duplicate declaration
+        (function() {
+            const SUPABASE_URL = 'https://gpgjgplqsvyexumoljyo.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_JaVgg3CuVmI9SczGkoaRZQ_EaYoV9z9';
+            
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Hindari duplikasi deklarasi
-        let supabase;
-        if (!window.supabaseClient) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            window.supabaseClient = supabase;
-        } else {
-            supabase = window.supabaseClient;
-        }
+            let allData = [];
+            let filteredData = [];
+            let currentPage = 1;
+            const itemsPerPage = 20;
 
-        let allData = [];
-        let filteredData = [];
-        let currentPage = 1;
-        const itemsPerPage = 20;
+            const columnLabels = {
+                id: 'ID',
+                no_reg: 'No. Registrasi',
+                nama: 'Nama',
+                jk: 'JK',
+                tpt_lhr: 'Tempat Lahir',
+                tgl_lhr: 'Tanggal Lahir',
+                tpt_nkh: 'Tempat Nikah',
+                tgl_nkh: 'Tanggal Nikah',
+                alamat: 'Alamat',
+                ling_pel: 'Lingkungan Pelayanan',
+                status: 'Status'
+            };
 
-        const columnLabels = {
-            id: 'ID',
-            no_reg: 'No. Registrasi',
-            nama: 'Nama',
-            jk: 'JK',
-            tpt_lhr: 'Tempat Lahir',
-            tgl_lhr: 'Tanggal Lahir',
-            tpt_nkh: 'Tempat Nikah',
-            tgl_nkh: 'Tanggal Nikah',
-            alamat: 'Alamat',
-            ling_pel: 'Lingkungan Pelayanan',
-            status: 'Status'
-        };
+            async function loadData() {
+                showStatus('Memuat data...', 'loading');
+                try {
+                    const { data, error } = await supabase
+                        .from('jemaat')
+                        .select('*')
+                        .order('id', { ascending: true });
 
-        async function loadData() {
-            showStatus('Memuat data...', 'loading');
-            try {
-                const { data, error } = await supabase
-                    .from('jemaat')
-                    .select('*')
-                    .order('id', { ascending: true });
+                    if (error) throw error;
 
-                if (error) throw error;
+                    allData = data || [];
+                    filteredData = [...allData];
+                    currentPage = 1;
+                    
+                    renderTable();
+                    updateStats();
+                    updateLastUpdate();
+                    showStatus('Data berhasil dimuat', 'success', 2000);
+                } catch (error) {
+                    console.error('Error:', error);
+                    showStatus(`Error: ${error.message}`, 'error');
+                }
+            }
 
-                allData = data || [];
-                filteredData = [...allData];
-                currentPage = 1;
+            function renderTable() {
+                const thead = document.getElementById('table-head');
+                const tbody = document.getElementById('table-body');
+                const emptyState = document.getElementById('empty-state');
+
+                if (filteredData.length === 0) {
+                    emptyState.style.display = 'block';
+                    thead.innerHTML = '';
+                    tbody.innerHTML = '';
+                    document.getElementById('pagination-controls').innerHTML = '';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+
+                const headers = Object.keys(filteredData[0]);
+                thead.innerHTML = headers.map(header => 
+                    `<th>${columnLabels[header] || header}</th>`
+                ).join('');
+
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const pageData = filteredData.slice(start, end);
+
+                tbody.innerHTML = pageData.map(row => 
+                    `<tr>${headers.map(header => {
+                        let value = row[header];
+                        if (value === null || value === undefined || value === '0000-00-00' || value === '') {
+                            return '<td>-</td>';
+                        }
+                        return `<td>${escapeHtml(String(value))}</td>`;
+                    }).join('')}</tr>`
+                ).join('');
+
+                renderPagination();
+            }
+
+            function renderPagination() {
+                const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+                const controls = document.getElementById('pagination-controls');
+
+                if (totalPages <= 1) {
+                    controls.innerHTML = '';
+                    return;
+                }
+
+                let html = '<button onclick="window.dataApp.goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>«</button>';
+                html += '<button onclick="window.dataApp.goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>‹</button>';
+
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+
+                if (startPage > 1) html += '<span style="padding: 0.75rem;">...</span>';
+
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<button onclick="window.dataApp.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+                }
+
+                if (endPage < totalPages) html += '<span style="padding: 0.75rem;">...</span>';
+
+                html += '<button onclick="window.dataApp.goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>›</button>';
+                html += '<button onclick="window.dataApp.goToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>»</button>';
+
+                controls.innerHTML = html;
+            }
+
+            function updateStats() {
+                const statsContainer = document.getElementById('stats-container');
+                const total = filteredData.length;
+                const laki = filteredData.filter(d => d.jk === 'L').length;
+                const perempuan = filteredData.filter(d => d.jk === 'P').length;
+
+                statsContainer.innerHTML = `
+                    <div class="stat-card">
+                        <div class="label">Total Jemaat</div>
+                        <div class="value">${total.toLocaleString('id-ID')}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Laki-laki</div>
+                        <div class="value">${laki}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Perempuan</div>
+                        <div class="value">${perempuan}</div>
+                    </div>
+                `;
+            }
+
+            function updateLastUpdate() {
+                const now = new Date();
+                document.getElementById('update-time').textContent = now.toLocaleString('id-ID');
+            }
+
+            function showStatus(message, type, timeout = 0) {
+                const el = document.getElementById('status-message');
+                el.textContent = message;
+                el.className = `status-message show ${type}`;
                 
+                if (timeout > 0) {
+                    setTimeout(() => {
+                        el.classList.remove('show');
+                    }, timeout);
+                }
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Expose public methods
+            window.dataApp = {
+                goToPage: function(page) {
+                    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+                    if (page >= 1 && page <= totalPages) {
+                        currentPage = page;
+                        renderTable();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+                resetSearch: function() {
+                    document.getElementById('search-input').value = '';
+                    filteredData = [...allData];
+                    currentPage = 1;
+                    renderTable();
+                    updateStats();
+                },
+                refreshData: function() {
+                    loadData();
+                }
+            };
+
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                
+                if (query === '') {
+                    filteredData = [...allData];
+                } else {
+                    filteredData = allData.filter(row => {
+                        return Object.values(row).some(val => 
+                            String(val).toLowerCase().includes(query)
+                        );
+                    });
+                }
+                
+                currentPage = 1;
                 renderTable();
                 updateStats();
-                updateLastUpdate();
-                showStatus('Data berhasil dimuat', 'success', 2000);
-            } catch (error) {
-                console.error('Error:', error);
-                showStatus(`Error: ${error.message}`, 'error');
-            }
-        }
+            });
 
-        function renderTable() {
-            const thead = document.getElementById('table-head');
-            const tbody = document.getElementById('table-body');
-            const emptyState = document.getElementById('empty-state');
-
-            if (filteredData.length === 0) {
-                emptyState.style.display = 'block';
-                thead.innerHTML = '';
-                tbody.innerHTML = '';
-                document.getElementById('pagination-controls').innerHTML = '';
-                return;
-            }
-
-            emptyState.style.display = 'none';
-
-            // Render header
-            const headers = Object.keys(filteredData[0]);
-            thead.innerHTML = headers.map(header => 
-                `<th>${columnLabels[header] || header}</th>`
-            ).join('');
-
-            // Render body dengan pagination
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pageData = filteredData.slice(start, end);
-
-            tbody.innerHTML = pageData.map(row => 
-                `<tr>${headers.map(header => {
-                    let value = row[header];
-                    if (value === null || value === undefined || value === '0000-00-00' || value === '') {
-                        return '<td>-</td>';
-                    }
-                    return `<td>${escapeHtml(String(value))}</td>`;
-                }).join('')}</tr>`
-            ).join('');
-
-            renderPagination();
-        }
-
-        function renderPagination() {
-            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-            const controls = document.getElementById('pagination-controls');
-
-            if (totalPages <= 1) {
-                controls.innerHTML = '';
-                return;
-            }
-
-            let html = '<button onclick="goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>«</button>';
-            html += '<button onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>‹</button>';
-
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
-
-            if (startPage > 1) html += '<span style="padding: 0.75rem;">...</span>';
-
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
-            }
-
-            if (endPage < totalPages) html += '<span style="padding: 0.75rem;">...</span>';
-
-            html += '<button onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>›</button>';
-            html += '<button onclick="goToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>»</button>';
-
-            controls.innerHTML = html;
-        }
-
-        function goToPage(page) {
-            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                renderTable();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
-
-        function updateStats() {
-            const statsContainer = document.getElementById('stats-container');
-            const total = filteredData.length;
-            const laki = filteredData.filter(d => d.jk === 'L').length;
-            const perempuan = filteredData.filter(d => d.jk === 'P').length;
-
-            statsContainer.innerHTML = `
-                <div class="stat-card">
-                    <div class="label">Total Jemaat</div>
-                    <div class="value">${total.toLocaleString('id-ID')}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">Laki-laki</div>
-                    <div class="value">${laki}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">Perempuan</div>
-                    <div class="value">${perempuan}</div>
-                </div>
-            `;
-        }
-
-        function updateLastUpdate() {
-            const now = new Date();
-            document.getElementById('update-time').textContent = now.toLocaleString('id-ID');
-        }
-
-        function showStatus(message, type, timeout = 0) {
-            const el = document.getElementById('status-message');
-            el.textContent = message;
-            el.className = `status-message show ${type}`;
-            
-            if (timeout > 0) {
-                setTimeout(() => {
-                    el.classList.remove('show');
-                }, timeout);
-            }
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            
-            if (query === '') {
-                filteredData = [...allData];
-            } else {
-                filteredData = allData.filter(row => {
-                    return Object.values(row).some(val => 
-                        String(val).toLowerCase().includes(query)
-                    );
-                });
-            }
-            
-            currentPage = 1;
-            renderTable();
-            updateStats();
-        });
-
-        function resetSearch() {
-            document.getElementById('search-input').value = '';
-            filteredData = [...allData];
-            currentPage = 1;
-            renderTable();
-            updateStats();
-        }
-
-        function refreshData() {
-            loadData();
-        }
-
-        // Load data on page load
-        window.addEventListener('load', loadData);
+            window.addEventListener('load', loadData);
+        })();
     </script>
 </body>
 </html>
